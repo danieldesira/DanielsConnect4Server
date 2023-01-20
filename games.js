@@ -34,18 +34,50 @@ function startServer() {
             color:  newPlayer.color
         }));
 
-        ws.on('message', (ws, code) => {
+        // If opponent already connected, send name of opponent to the new player
+        let opponent = getOpponent(newPlayer);
+        if (opponent !== null) {
+            newPlayer.ws.send(JSON.stringify({
+                opponentName: opponent.name
+            }));
+        }
+
+        ws.on('message', (data) => {
+            let messageData = JSON.parse(data);
+
+            // Handle player name update
+            if (messageData.name) {
+                newPlayer.name = messageData.name;
+                
+                if (opponent === null) {
+                    opponent = getOpponent(newPlayer);
+                }
+                
+                if (opponent !== null) {
+                    opponent.ws.send(JSON.stringify({
+                        opponentName: newPlayer.name
+                    }));
+                }
+            }
+
+            //to handle canvas clicks and mousemoves
+
             //to pass on message to opponent
         });
 
         ws.on('close', () => {
             // Remove players for that game
             currentPlayers.delete(newPlayer);
-            let opponent = getOpponent(newPlayer);
-            if (opponent != null) {
+            
+            if (opponent === null) {
+                opponent = getOpponent(newPlayer);
+            }
+            
+            if (opponent !== null) {
                 // Notify opponent that player left
                 opponent.ws.send(JSON.stringify({
-                    message: 'You won as other player disconnected!'
+                    message: 'You won as your opponent disconnected!',
+                    win: true
                 }));
 
                 currentPlayers.delete(opponent);
