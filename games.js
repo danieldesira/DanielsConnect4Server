@@ -60,9 +60,33 @@ function startServer() {
                 }
             }
 
-            //to handle canvas clicks and mousemoves
+            // Handle clicks
+            if (messageData.action === 'click' && messageData.column) {
+                if (opponent === null) {
+                    opponent = getOpponent(newPlayer);
+                }
 
-            //to pass on message to opponent
+                if (opponent !== null) {
+                    opponent.ws.send(JSON.stringify({
+                        action: messageData.action,
+                        column: messageData.column
+                    }));
+                }
+            }
+
+            // Handle canvas mousemoves
+            if (messageData.action === 'mousemove' && messageData.column) {
+                if (opponent === null) {
+                    opponent = getOpponent(newPlayer);
+                }
+
+                if (opponent !== null) {
+                    opponent.ws.send(JSON.stringify({
+                        action: messageData.action,
+                        column: messageData.column
+                    }));
+                }
+            }
         });
 
         ws.on('close', () => {
