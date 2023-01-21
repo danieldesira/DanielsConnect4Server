@@ -14,18 +14,20 @@ let functions = {
 };
 
 let currentPlayers = new Set();
+let currentGameId = 0;
 
 module.exports = functions;
 
 function startServer() {
     socketServer.on('connection', (ws) => {
         let newPlayer = {
-            gameId: Math.floor(currentPlayers.size / 2),
-            color:  (currentPlayers.size % 2 === 0 ? Colors.Red : Colors.Green),
+            gameId: currentGameId,
+            color:  (getPlayerCountForCurrentGameId() === 0 ? Colors.Red : Colors.Green),
             name:   null,
             ws:     ws
         };
         currentPlayers.add(newPlayer);
+        updateGameId();
 
         console.log('Player connected: G Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
 
@@ -119,4 +121,21 @@ function getOpponent(player) {
         }
     });
     return opponent;
+}
+
+function getPlayerCountForCurrentGameId() {
+    let playerCount = 0;
+    currentPlayers.forEach((p) => {
+        if (p.gameId === currentGameId) {
+            playerCount++;
+        }
+    });
+    return playerCount;
+}
+
+function updateGameId() {
+    let playerCount = getPlayerCountForCurrentGameId();
+    if (playerCount > 1) {
+        currentGameId++;
+    }
 }
