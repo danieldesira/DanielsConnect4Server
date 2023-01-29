@@ -9,4 +9,5 @@ will not be hit.
 Daniel Desira
 
 ## Version History
-### 0.1
+### 0.1 (Alpha - )
+* Implemented server handling basic game requests

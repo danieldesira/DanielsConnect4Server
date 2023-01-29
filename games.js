@@ -62,8 +62,8 @@ function startServer() {
                 }
             }
 
-            // Handle clicks
-            if (messageData.action === 'click' && messageData.column) {
+            // Handle canvas clicks
+            if (messageData.action === 'click' && !isNaN(messageData.column)) {
                 if (opponent === null) {
                     opponent = getOpponent(newPlayer);
                 }
@@ -77,7 +77,7 @@ function startServer() {
             }
 
             // Handle canvas mousemoves
-            if (messageData.action === 'mousemove' && messageData.column) {
+            if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
                 if (opponent === null) {
                     opponent = getOpponent(newPlayer);
                 }
@@ -108,7 +108,6 @@ function startServer() {
 
                 currentPlayers.delete(opponent);
             }
-            console.table(currentPlayers);
         });
     });
 }
