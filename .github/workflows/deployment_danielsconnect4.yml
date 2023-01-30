@@ -32,6 +32,9 @@ jobs:
         with:
           name: node-app
           path: .
+      
+      - name: Run server
+        run: node main
 
   deploy:
     runs-on: ubuntu-latest

@@ -9,5 +9,5 @@ will not be hit.
 Daniel Desira
 
 ## Version History
-### 0.1 (Alpha - )
+### 0.1 (Alpha - 30/01/2023)
 * Implemented server handling basic game requests
