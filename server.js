@@ -1,33 +1,34 @@
-const { Server } = require('ws');
+const { WebPubSubServiceClient } = require('@azure/web-pubsub');
+const WebSocket = require('ws');
+const express = require('express');
+const cors = require('cors');
+const GameUtils = require('./game-utils');
 
-const socketServer = new Server({
-    port: 443
-});
+const app = express();
+const port = 3000;
 
-const Colors = Object.freeze({
-    Red: 'red',
-    Green: 'greenyellow'
-});
+const connectionString = 'Endpoint=https://danielsconnect4.webpubsub.azure.com;AccessKey=xZtcLsZRVEk/Ms99wDfjGzJNJAtrIyOSxtO9bAMQC28=;Version=1.0;';
 
-let functions = {
-    startServer: startServer
-};
+let serviceClient = new WebPubSubServiceClient(connectionString, 'Hub');
 
-let currentPlayers = new Set();
-let currentGameId = 0;
+app.use(cors());
 
-module.exports = functions;
+app.listen(port, () => {
+    console.log('Express server listening for connections');
+})
 
-function startServer() {
+async function main() {
+    let token = await serviceClient.getClientAccessToken();
+    let socketServer = new WebSocket(token.url, 'json.webpubsub.azure.v1');console.log(token.url);
     socketServer.on('connection', (ws) => {
         let newPlayer = {
-            gameId: currentGameId,
-            color:  (getPlayerCountForCurrentGameId() === 0 ? Colors.Red : Colors.Green),
+            gameId: GameUtils.getCurrentGameId(),
+            color:  (GameUtils.getPlayerCountForCurrentGameId() === 0 ? GameUtils.Colors.Red : GameUtils.Colors.Green),
             name:   null,
             ws:     ws
         };
-        currentPlayers.add(newPlayer);
-        updateGameId();
+        gameUtils.connectNewPlayer(newPlayer);
+        GameUtils.updateGameId();
 
         console.log('Player connected: G Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
 
@@ -37,7 +38,7 @@ function startServer() {
         }));
 
         // If opponent already connected, send name of opponent to the new player
-        let opponent = getOpponent(newPlayer);
+        let opponent = GameUtils.getOpponent(newPlayer);
         if (opponent !== null) {
             newPlayer.ws.send(JSON.stringify({
                 opponentName: opponent.name
@@ -52,7 +53,7 @@ function startServer() {
                 newPlayer.name = messageData.name;
                 
                 if (opponent === null) {
-                    opponent = getOpponent(newPlayer);
+                    opponent = GameUtils.getOpponent(newPlayer);
                 }
                 
                 if (opponent !== null) {
@@ -65,7 +66,7 @@ function startServer() {
             // Handle canvas clicks
             if (messageData.action === 'click' && !isNaN(messageData.column)) {
                 if (opponent === null) {
-                    opponent = getOpponent(newPlayer);
+                    opponent = GameUtils.getOpponent(newPlayer);
                 }
 
                 if (opponent !== null) {
@@ -79,7 +80,7 @@ function startServer() {
             // Handle canvas mousemoves
             if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
                 if (opponent === null) {
-                    opponent = getOpponent(newPlayer);
+                    opponent = GameUtils.getOpponent(newPlayer);
                 }
 
                 if (opponent !== null) {
@@ -93,10 +94,10 @@ function startServer() {
 
         ws.on('close', () => {
             // Remove players for that game
-            currentPlayers.delete(newPlayer);
+            GameUtils.removePlayer(newPlayer);
             
             if (opponent === null) {
-                opponent = getOpponent(newPlayer);
+                opponent = GameUtils.getOpponent(newPlayer);
             }
             
             if (opponent !== null) {
@@ -106,35 +107,21 @@ function startServer() {
                     win: true
                 }));
 
-                currentPlayers.delete(opponent);
+                GameUtils.removePlayer(opponent);
             }
+        });
+
+        ws.on('error', (er) => {
+            console.log('Error: ' + er);
+        });
+    });
+
+    app.get('/negotiate', async (req, res) => {console.log(token.url);
+        res.json({
+            url: token.url
         });
     });
 }
 
-function getOpponent(player) {
-    let opponent = null;
-    currentPlayers.forEach((p) => {
-        if (p.gameId === player.gameId && p.color !== player.color) {
-            opponent = p;
-        }
-    });
-    return opponent;
-}
-
-function getPlayerCountForCurrentGameId() {
-    let playerCount = 0;
-    currentPlayers.forEach((p) => {
-        if (p.gameId === currentGameId) {
-            playerCount++;
-        }
-    });
-    return playerCount;
-}
-
-function updateGameId() {
-    let playerCount = getPlayerCountForCurrentGameId();
-    if (playerCount > 1) {
-        currentGameId++;
-    }
-}
+main();
+console.log('Daniel\'s Connect4 Server 0.1.1 (Alpha) running...');
