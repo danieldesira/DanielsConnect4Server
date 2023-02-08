@@ -9,5 +9,8 @@ will not be hit.
 Daniel Desira
 
 ## Version History
-### 0.1 (Alpha - )
+### 0.1.1 (Alpha - 08/02/2023)
+* Refactoring, attempting to fix issue for Azure app
+
+### 0.1 (Alpha - 30/01/2023)
 * Implemented server handling basic game requests
