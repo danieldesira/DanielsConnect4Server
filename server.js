@@ -4,9 +4,10 @@ const http = require('http');
 
 const port = 3000;
 
+// Need this HTTP server to run for Adaptable.io hosting
 http.createServer((req, res) => {
-    res.end('hello');
-}).listen(port, '0.0.0.0');
+    res.end('Daniel\'s Connect4 Server is running!');
+}).listen(process.env.PORT, '0.0.0.0');
 
 let socketServer = new Server({
     port: port
