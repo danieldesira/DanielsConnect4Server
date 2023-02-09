@@ -1,7 +1,12 @@
 const { Server } = require('ws');
 const GameUtils = require('./game-utils');
+const http = require('http');
 
 const port = 3000;
+
+http.createServer((req, res) => {
+    res.end('hello');
+}).listen(port, '0.0.0.0');
 
 let socketServer = new Server({
     port: port
