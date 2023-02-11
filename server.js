@@ -2,7 +2,7 @@ const { Server } = require('ws');
 const GameUtils = require('./game-utils');
 const http = require('http');
 
-const port = 3000;
+const port = 443;
 
 // Need this HTTP server to run for Adaptable.io hosting
 http.createServer((req, res) => {
