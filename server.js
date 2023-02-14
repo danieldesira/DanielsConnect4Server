@@ -2,16 +2,14 @@ const { Server } = require('ws');
 const GameUtils = require('./game-utils');
 const http = require('http');
 
-const port = 443;
+const port = process.env.PORT || 3000;
 
 // Need this HTTP server to run for Adaptable.io hosting
-http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
     res.end('Daniel\'s Connect4 Server is running!');
-}).listen(process.env.PORT, '0.0.0.0');
+}).listen(port, '0.0.0.0');
 
-let socketServer = new Server({
-    port: port
-});
+let socketServer = new Server({ server });
 socketServer.on('connection', (ws) => {
     let newPlayer = {
         gameId: GameUtils.getCurrentGameId(),
@@ -108,4 +106,5 @@ socketServer.on('connection', (ws) => {
     });
 });
 
-console.log('Daniel\'s Connect4 Server 0.1.1 (Alpha) running...');
+console.log('Daniel\'s Connect4 Server 0.1.1.3 (Alpha) running...');
+console.log('Listening on port: ' + port);
