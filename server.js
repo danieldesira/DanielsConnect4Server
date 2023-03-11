@@ -10,10 +10,23 @@ const server = http.createServer((req, res) => {
 }).listen(port, '0.0.0.0');
 
 let socketServer = new Server({ server });
-socketServer.on('connection', (ws) => {
+socketServer.on('connection', (ws, req) => {
+    let url = new URL('wss://example.com' + req.url);
+
+    let gameId = 0;
+    let color;
+
+    if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
+        gameId = parseInt(url.searchParams.get('gameId'));
+        color = url.searchParams.get('playerColor');
+    } else {
+        gameId = GameUtils.getCurrentGameId();
+        color = (GameUtils.getPlayerCountForCurrentGameId() === 0 ? GameUtils.Colors.Red : GameUtils.Colors.Green);
+    }
+
     let newPlayer = {
-        gameId: GameUtils.getCurrentGameId(),
-        color:  (GameUtils.getPlayerCountForCurrentGameId() === 0 ? GameUtils.Colors.Red : GameUtils.Colors.Green),
+        gameId: gameId,
+        color:  color,
         name:   null,
         ws:     ws
     };
@@ -92,10 +105,10 @@ socketServer.on('connection', (ws) => {
         
         if (opponent !== null) {
             // Notify opponent that player left
-            opponent.ws.send(JSON.stringify({
-                message: 'You won as your opponent disconnected!',
-                win: true
-            }));
+            // opponent.ws.send(JSON.stringify({
+            //     message: 'You won as your opponent disconnected!',
+            //     win: true
+            // }));
 
             GameUtils.removePlayer(opponent);
         }
@@ -106,5 +119,5 @@ socketServer.on('connection', (ws) => {
     });
 });
 
-console.log('Daniel\'s Connect4 Server 0.1.1.3 (Alpha) running...');
+console.log('Daniel\'s Connect4 Server 0.1.2 (Alpha) running...');
 console.log('Listening on port: ' + port);

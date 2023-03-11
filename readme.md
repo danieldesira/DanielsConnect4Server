@@ -9,6 +9,9 @@ will not be hit.
 Daniel Desira
 
 ## Version History
+### 0.1.2 (Alpha - )
+* Reconnect disconnected clients
+
 ### 0.1.1.3 (Alpha - 14/02/2023)
 * Run WebSocket server on same port as HTTP
 
