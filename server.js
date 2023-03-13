@@ -15,10 +15,12 @@ socketServer.on('connection', (ws, req) => {
 
     let gameId = 0;
     let color;
+    let name = null;
 
     if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
         gameId = parseInt(url.searchParams.get('gameId'));
         color = url.searchParams.get('playerColor');
+        name = url.searchParams.get('playerName');
     } else {
         gameId = GameUtils.getCurrentGameId();
         color = (GameUtils.getPlayerCountForCurrentGameId() === 0 ? GameUtils.Colors.Red : GameUtils.Colors.Green);
@@ -27,13 +29,13 @@ socketServer.on('connection', (ws, req) => {
     let newPlayer = {
         gameId: gameId,
         color:  color,
-        name:   null,
+        name:   name,
         ws:     ws
     };
     GameUtils.connectNewPlayer(newPlayer);
     GameUtils.updateGameId();
 
-    console.log('Player connected: G Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
+    console.log('Player connected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
 
     ws.send(JSON.stringify({
         gameId: newPlayer.gameId,
@@ -42,7 +44,7 @@ socketServer.on('connection', (ws, req) => {
 
     // If opponent already connected, send name of opponent to the new player
     let opponent = GameUtils.getOpponent(newPlayer);
-    if (opponent !== null) {
+    if (opponent) {
         newPlayer.ws.send(JSON.stringify({
             opponentName: opponent.name
         }));
@@ -51,67 +53,41 @@ socketServer.on('connection', (ws, req) => {
     ws.on('message', (data) => {
         let messageData = JSON.parse(data);
 
-        // Handle player name update
-        if (messageData.name) {
-            newPlayer.name = messageData.name;
-            
-            if (opponent === null) {
-                opponent = GameUtils.getOpponent(newPlayer);
-            }
-            
-            if (opponent !== null) {
+        opponent = GameUtils.getOpponent(newPlayer);
+
+        if (opponent) {
+            // Handle player name update
+            if (messageData.name) {
+                newPlayer.name = messageData.name;
+                
                 opponent.ws.send(JSON.stringify({
                     opponentName: newPlayer.name
                 }));
             }
-        }
 
-        // Handle canvas clicks
-        if (messageData.action === 'click' && !isNaN(messageData.column)) {
-            if (opponent === null) {
-                opponent = GameUtils.getOpponent(newPlayer);
+            // Handle canvas clicks
+            if (messageData.action === 'click' && !isNaN(messageData.column)) {
+                opponent.ws.send(JSON.stringify({
+                    action: messageData.action,
+                    column: messageData.column
+                }));
             }
 
-            if (opponent !== null) {
+            // Handle canvas mousemoves
+            if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
                 opponent.ws.send(JSON.stringify({
                     action: messageData.action,
                     column: messageData.column
                 }));
             }
         }
-
-        // Handle canvas mousemoves
-        if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
-            if (opponent === null) {
-                opponent = GameUtils.getOpponent(newPlayer);
-            }
-
-            if (opponent !== null) {
-                opponent.ws.send(JSON.stringify({
-                    action: messageData.action,
-                    column: messageData.column
-                }));
-            }
-        }
+        
     });
 
     ws.on('close', () => {
-        // Remove players for that game
         GameUtils.removePlayer(newPlayer);
-        
-        if (opponent === null) {
-            opponent = GameUtils.getOpponent(newPlayer);
-        }
-        
-        if (opponent !== null) {
-            // Notify opponent that player left
-            // opponent.ws.send(JSON.stringify({
-            //     message: 'You won as your opponent disconnected!',
-            //     win: true
-            // }));
-
-            GameUtils.removePlayer(opponent);
-        }
+        opponent = null;
+        console.log('Player disconnected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
     });
 
     ws.on('error', (er) => {
