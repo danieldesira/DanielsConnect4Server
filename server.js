@@ -37,29 +37,32 @@ socketServer.on('connection', (ws, req) => {
 
     console.log('Player connected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
 
-    ws.send(JSON.stringify({
+    let initialDataToSendNewPlayer = {
         gameId: newPlayer.gameId,
         color:  newPlayer.color
-    }));
+    };
 
-    // If opponent already connected, send name of opponent to the new player
+    // If opponent already connected, also send name of opponent to the new player
     let opponent = GameUtils.getOpponent(newPlayer);
     if (opponent) {
-        newPlayer.ws.send(JSON.stringify({
-            opponentName: opponent.name
-        }));
+        initialDataToSendNewPlayer.opponentName = opponent.name;
     }
+
+    ws.send(JSON.stringify(initialDataToSendNewPlayer));
 
     ws.on('message', (data) => {
         let messageData = JSON.parse(data);
+
+        // Update player name
+        if (messageData.name) {
+            newPlayer.name = messageData.name;
+        }
 
         opponent = GameUtils.getOpponent(newPlayer);
 
         if (opponent) {
             // Handle player name update
             if (messageData.name) {
-                newPlayer.name = messageData.name;
-                
                 opponent.ws.send(JSON.stringify({
                     opponentName: newPlayer.name
                 }));

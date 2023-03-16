@@ -11,6 +11,7 @@ Daniel Desira
 ## Version History
 ### 0.1.2 (Alpha - )
 * Reconnect disconnected clients
+* Code cleanup and some focus on efficiency
 
 ### 0.1.1.3 (Alpha - 14/02/2023)
 * Run WebSocket server on same port as HTTP
