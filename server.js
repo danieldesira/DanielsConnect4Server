@@ -83,6 +83,20 @@ socketServer.on('connection', (ws, req) => {
                     column: messageData.column
                 }));
             }
+
+            if (messageData.skipTurn && messageData.currentTurn) {
+                opponent.ws.send(JSON.stringify({
+                    skipTurn: true,
+                    currentTurn: messageData.currentTurn
+                }));
+            }
+
+            if (messageData.endGameDueToInactivity && messageData.currentTurn) {
+                opponent.ws.send(JSON.stringify({
+                    endGameDueToInactivity: true,
+                    currentTurn: messageData.currentTurn
+                }));
+            }
         }
         
     });
