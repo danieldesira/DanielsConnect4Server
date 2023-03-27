@@ -10,95 +10,101 @@ const server = http.createServer((req, res) => {
 }).listen(port, '0.0.0.0');
 
 let socketServer = new Server({ server });
-socketServer.on('connection', (ws) => {
+socketServer.on('connection', (ws, req) => {
+    let url = new URL('wss://example.com' + req.url);
+
+    let gameId = 0;
+    let color;
+    let name = null;
+
+    if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
+        gameId = parseInt(url.searchParams.get('gameId'));
+        color = url.searchParams.get('playerColor');
+        name = url.searchParams.get('playerName');
+    } else {
+        gameId = GameUtils.getCurrentGameId();
+        color = (GameUtils.getPlayerCountForCurrentGameId() === 0 ? GameUtils.Colors.Red : GameUtils.Colors.Green);
+    }
+
     let newPlayer = {
-        gameId: GameUtils.getCurrentGameId(),
-        color:  (GameUtils.getPlayerCountForCurrentGameId() === 0 ? GameUtils.Colors.Red : GameUtils.Colors.Green),
-        name:   null,
+        gameId: gameId,
+        color:  color,
+        name:   name,
         ws:     ws
     };
     GameUtils.connectNewPlayer(newPlayer);
     GameUtils.updateGameId();
 
-    console.log('Player connected: G Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
+    console.log('Player connected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
 
-    ws.send(JSON.stringify({
+    let initialDataToSendNewPlayer = {
         gameId: newPlayer.gameId,
         color:  newPlayer.color
-    }));
+    };
 
-    // If opponent already connected, send name of opponent to the new player
+    // If opponent already connected, also send name of opponent to the new player
     let opponent = GameUtils.getOpponent(newPlayer);
-    if (opponent !== null) {
-        newPlayer.ws.send(JSON.stringify({
-            opponentName: opponent.name
-        }));
+    if (opponent) {
+        initialDataToSendNewPlayer.opponentName = opponent.name;
     }
+
+    ws.send(JSON.stringify(initialDataToSendNewPlayer));
 
     ws.on('message', (data) => {
         let messageData = JSON.parse(data);
 
-        // Handle player name update
+        // Update player name
         if (messageData.name) {
             newPlayer.name = messageData.name;
-            
-            if (opponent === null) {
-                opponent = GameUtils.getOpponent(newPlayer);
-            }
-            
-            if (opponent !== null) {
+        }
+
+        opponent = GameUtils.getOpponent(newPlayer);
+
+        if (opponent) {
+            // Handle player name update
+            if (messageData.name) {
                 opponent.ws.send(JSON.stringify({
                     opponentName: newPlayer.name
                 }));
             }
-        }
 
-        // Handle canvas clicks
-        if (messageData.action === 'click' && !isNaN(messageData.column)) {
-            if (opponent === null) {
-                opponent = GameUtils.getOpponent(newPlayer);
-            }
-
-            if (opponent !== null) {
+            // Handle canvas clicks
+            if (messageData.action === 'click' && !isNaN(messageData.column)) {
                 opponent.ws.send(JSON.stringify({
                     action: messageData.action,
                     column: messageData.column
                 }));
             }
-        }
 
-        // Handle canvas mousemoves
-        if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
-            if (opponent === null) {
-                opponent = GameUtils.getOpponent(newPlayer);
-            }
-
-            if (opponent !== null) {
+            // Handle canvas mousemoves
+            if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
                 opponent.ws.send(JSON.stringify({
                     action: messageData.action,
                     column: messageData.column
                 }));
             }
+
+            if (messageData.skipTurn && messageData.currentTurn) {
+                opponent.ws.send(JSON.stringify({
+                    skipTurn: true,
+                    currentTurn: messageData.currentTurn
+                }));
+            }
+
+            if (messageData.endGameDueToInactivity && messageData.currentTurn) {
+                opponent.ws.send(JSON.stringify({
+                    endGameDueToInactivity: true,
+                    currentTurn: messageData.currentTurn
+                }));
+            }
         }
+        
     });
 
     ws.on('close', () => {
-        // Remove players for that game
         GameUtils.removePlayer(newPlayer);
-        
-        if (opponent === null) {
-            opponent = GameUtils.getOpponent(newPlayer);
-        }
-        
-        if (opponent !== null) {
-            // Notify opponent that player left
-            opponent.ws.send(JSON.stringify({
-                message: 'You won as your opponent disconnected!',
-                win: true
-            }));
-
-            GameUtils.removePlayer(opponent);
-        }
+        opponent = null;
+        console.log('Player disconnected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
     });
 
     ws.on('error', (er) => {
@@ -106,5 +112,5 @@ socketServer.on('connection', (ws) => {
     });
 });
 
-console.log('Daniel\'s Connect4 Server 0.1.1.3 (Alpha) running...');
+console.log('Daniel\'s Connect4 Server 0.1.2 (Alpha) running...');
 console.log('Listening on port: ' + port);

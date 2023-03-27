@@ -4,13 +4,13 @@ const Colors = Object.freeze({
 });
 
 module.exports = {
-    getOpponent: getOpponent,
-    getPlayerCountForCurrentGameId: getPlayerCountForCurrentGameId,
-    updateGameId: updateGameId,
-    connectNewPlayer: connectNewPlayer,
-    removePlayer: removePlayer,
-    getCurrentGameId: getCurrentGameId,
-    Colors: Colors
+    getOpponent,
+    getPlayerCountForCurrentGameId,
+    updateGameId,
+    connectNewPlayer,
+    removePlayer,
+    getCurrentGameId,
+    Colors
 };
 
 let currentPlayers = new Set();
