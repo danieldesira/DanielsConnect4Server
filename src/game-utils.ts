@@ -4,10 +4,17 @@ export enum Colors {
 }
 
 export class Player {
+
     public gameId: number;
     public color:  Colors;
     public name:   string;
     public ws:     any;
+
+    public constructor() {
+        this.gameId = -1;
+        this.color = Colors.Red;
+        this.name = '';
+    }
 
     private static currentPlayers: Set<Player> = new Set();
     private static currentGameId: number = 0;

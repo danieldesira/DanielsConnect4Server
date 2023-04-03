@@ -1,8 +1,11 @@
 Server for Daniel's Connect4 based on WebSockets.
 
+## Building
+In the terminal, enter `` npm run build ``.
+
 ## Debugging
 If you are using Visual Studio Code, always make sure terminal is in `` Javascript Debug Terminal `` mode. Otherwise, breakpoints 
-will not be hit.
+will not be hit. To start up server, enter `` npm start `` in the terminal.
 
 ## Contributors
 ### Developers
