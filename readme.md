@@ -9,7 +9,10 @@ will not be hit.
 Daniel Desira
 
 ## Version History
-### 0.1.2 (Alpha - )
+### 0.2 (Beta - )
+* Converted code to TypeScript
+
+### 0.1.2 (Alpha - 27/03/2023)
 * Reconnect disconnected clients
 * Code cleanup and some focus on efficiency
 * Handle inactivity-related messages
