@@ -1,18 +1,15 @@
-export enum Colors {
-    Red = 'red',
-    Green = 'greenyellow'
-}
+import { Dot } from "@danieldesira/daniels-connect4-common/lib/enums/dot";
 
 export class Player {
 
     public gameId: number;
-    public color:  Colors;
+    public color:  Dot;
     public name:   string;
     public ws:     any;
 
     public constructor() {
         this.gameId = -1;
-        this.color = Colors.Red;
+        this.color = Dot.Red;
         this.name = '';
     }
 

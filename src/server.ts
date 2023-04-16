@@ -1,8 +1,11 @@
 const { Server } = require('ws');
-import { Colors, Player } from './game-utils';
+import { Dot } from '@danieldesira/daniels-connect4-common/lib/enums/dot';
+import GameBoard from './game-board';
+import { Player } from './game-utils';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
+const boards: Array<GameBoard> = new Array();
 
 // Need this HTTP server to run for Adaptable.io hosting
 const server = http.createServer((req: any, res: { end: (arg0: string) => void; }) => {
@@ -14,21 +17,21 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
     let url = new URL('wss://example.com' + req.url);
 
     let gameId = 0;
-    let color: Colors;
+    let color: Dot;
     let name: string = '';
 
     if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
         gameId = parseInt(url.searchParams.get('gameId') ?? '0');
         let colorString = url.searchParams.get('playerColor') ?? 'red';
-        if (colorString === Colors.Red) {
-            color = Colors.Red;
+        if (colorString === Dot.Red) {
+            color = Dot.Red;
         } else {
-            color = Colors.Green;
+            color = Dot.Green;
         }
         name = url.searchParams.get('playerName') ?? '';
     } else {
         gameId = Player.getCurrentGameId();
-        color = (Player.getPlayerCountForCurrentGameId() === 0 ? Colors.Red : Colors.Green);
+        color = (Player.getPlayerCountForCurrentGameId() === 0 ? Dot.Red : Dot.Green);
     }
 
     let newPlayer: Player = {
@@ -76,6 +79,8 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
 
             // Handle canvas clicks
             if (messageData.action === 'click' && !isNaN(messageData.column)) {
+                let board = getCurrentBoard(gameId);
+                board.put(newPlayer.color, messageData.column);
                 opponent.ws.send(JSON.stringify({
                     action: messageData.action,
                     column: messageData.column
@@ -120,3 +125,17 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
 
 console.log('Daniel\'s Connect4 Server 0.2 (Beta) running...');
 console.log('Listening on port: ' + port);
+
+function getCurrentBoard(gameId: number) {
+    let board: GameBoard | null = null;
+    boards.forEach(b => {
+        if (gameId === b.getGameId()) {
+            board = b;
+        }
+    });
+    if (!board) {
+        board = new GameBoard(gameId);
+        boards.push(board);
+    }
+    return board;
+}
