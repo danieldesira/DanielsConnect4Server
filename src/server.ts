@@ -2,6 +2,13 @@ const { Server } = require('ws');
 import { Dot } from '@danieldesira/daniels-connect4-common/lib/enums/dot';
 import GameBoard from './game-board';
 import { Player } from './game-utils';
+import { GameStatus } from './enums/game-status';
+import { InitialMessage } from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
+import { ActionMessage } from '@danieldesira/daniels-connect4-common/lib/models/action-message';
+import { WinnerMessage } from '@danieldesira/daniels-connect4-common/lib/models/winner-message';
+import { TieMessage } from '@danieldesira/daniels-connect4-common/lib/models/tie-message';
+import { InactivityMessage } from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
+import { SkipTurnMessage } from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -45,11 +52,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
 
     console.log('Player connected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
 
-    let initialDataToSendNewPlayer = {
-        gameId:       newPlayer.gameId,
-        color:        newPlayer.color,
-        opponentName: ''
-    };
+    let initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
 
     // If opponent already connected, also send name of opponent to the new player
     let opponent = Player.getOpponent(newPlayer);
@@ -80,33 +83,36 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
             // Handle canvas clicks
             if (messageData.action === 'click' && !isNaN(messageData.column)) {
                 let board = getCurrentBoard(gameId);
-                board.put(newPlayer.color, messageData.column);
-                opponent.ws.send(JSON.stringify({
-                    action: messageData.action,
-                    column: messageData.column
-                }));
+                let status = board.put(newPlayer.color, messageData.column);
+                let message = new ActionMessage(messageData.column, messageData.action);
+                opponent.ws.send(JSON.stringify(message));
+
+                if (status !== GameStatus.InProgress) {
+                    let data = null;
+                    if (status === GameStatus.Winner) {
+                        data = new WinnerMessage(newPlayer.color);
+                    } else {
+                        data = new TieMessage();
+                    }
+                    newPlayer.ws.send(JSON.stringify(data));
+                    opponent.ws.send(JSON.stringify(data));
+                }
             }
 
             // Handle canvas mousemoves
             if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
-                opponent.ws.send(JSON.stringify({
-                    action: messageData.action,
-                    column: messageData.column
-                }));
+                let message = new ActionMessage(messageData.column, messageData.action);
+                opponent.ws.send(JSON.stringify(message));
             }
 
             if (messageData.skipTurn && messageData.currentTurn) {
-                opponent.ws.send(JSON.stringify({
-                    skipTurn: true,
-                    currentTurn: messageData.currentTurn
-                }));
+                let message = new SkipTurnMessage(true, messageData.currentTurn);
+                opponent.ws.send(JSON.stringify(message));
             }
 
             if (messageData.endGameDueToInactivity && messageData.currentTurn) {
-                opponent.ws.send(JSON.stringify({
-                    endGameDueToInactivity: true,
-                    currentTurn: messageData.currentTurn
-                }));
+                let message = new InactivityMessage(true, messageData.currentTurn);
+                opponent.ws.send(JSON.stringify(message));
             }
         }
         
