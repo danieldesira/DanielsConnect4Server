@@ -9,6 +9,7 @@ import { WinnerMessage } from '@danieldesira/daniels-connect4-common/lib/models/
 import { TieMessage } from '@danieldesira/daniels-connect4-common/lib/models/tie-message';
 import { InactivityMessage } from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
 import { SkipTurnMessage } from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
+import { GameMessage } from '@danieldesira/daniels-connect4-common/lib/models/game-message';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -62,7 +63,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
 
     ws.send(JSON.stringify(initialDataToSendNewPlayer));
 
-    ws.on('message', (data: string) => {
+    ws.on('message', async (data: string) => {
         let messageData = JSON.parse(data);
 
         // Update player name
@@ -80,10 +81,10 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
                 }));
             }
 
-            // Handle canvas clicks
-            if (messageData.action === 'click' && !isNaN(messageData.column)) {
+            if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
                 let board = getCurrentBoard(gameId);
-                let status = board.put(newPlayer.color, messageData.column);
+                let status = await board.put(newPlayer.color, messageData.column)
+                                        .catch((error) => console.log(`Something went wrong for game ${gameId}: ${error}`));
                 let message = new ActionMessage(messageData.column, messageData.action);
                 opponent.ws.send(JSON.stringify(message));
 
@@ -99,18 +100,17 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
                 }
             }
 
-            // Handle canvas mousemoves
-            if (messageData.action === 'mousemove' && !isNaN(messageData.column)) {
+            if (messageData.action === 'mousemove' && GameMessage.isActionMessage(messageData)) {
                 let message = new ActionMessage(messageData.column, messageData.action);
                 opponent.ws.send(JSON.stringify(message));
             }
 
-            if (messageData.skipTurn && messageData.currentTurn) {
+            if (GameMessage.isSkipTurnMessage(messageData)) {
                 let message = new SkipTurnMessage(true, messageData.currentTurn);
                 opponent.ws.send(JSON.stringify(message));
             }
 
-            if (messageData.endGameDueToInactivity && messageData.currentTurn) {
+            if (GameMessage.isInactivityMessage(messageData)) {
                 let message = new InactivityMessage(true, messageData.currentTurn);
                 opponent.ws.send(JSON.stringify(message));
             }
