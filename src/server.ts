@@ -84,7 +84,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
             if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
                 let board = getCurrentBoard(gameId);
                 let status = await board.put(newPlayer.color, messageData.column)
-                                        .catch((error) => console.log(`Something went wrong for game ${gameId}: ${error}`));
+                                        .catch((error) => console.error(`Something went wrong for game ${gameId}: ${error}`));
                 let message = new ActionMessage(messageData.column, messageData.action);
                 opponent.ws.send(JSON.stringify(message));
 

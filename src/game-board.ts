@@ -26,9 +26,30 @@ export default class GameBoard {
     public getGameId = () => this.gameId;
 
     public async put(color: Dot, column: number): Promise<GameStatus> {
+        const dbName: string = 'danielsconnect4';
+        const collectionName: string = 'game';
+
         try {
             await this.mongoClient.connect();
+            const queryResult = await this.mongoClient.db(dbName).collection(collectionName).findOne({gameId: this.gameId});
+            if (queryResult) {
+                this.board = queryResult.board;
+            }
             let row = BoardLogic.putDot(this.board, color, column);
+            if (queryResult) {
+                await this.mongoClient.db(dbName).collection(collectionName).updateOne({
+                    gameId: this.gameId
+                }, {
+                    $set: {
+                        board: this.board
+                    }
+                });
+            } else {
+                await this.mongoClient.db(dbName).collection(collectionName).insertOne({
+                    gameId: this.gameId,
+                    board: this.board
+                });
+            }
 
             if (BoardLogic.countConsecutiveDots(this.board, column, row, color) >= 4) {
                 return GameStatus.Winner;
