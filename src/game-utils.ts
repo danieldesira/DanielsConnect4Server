@@ -1,4 +1,6 @@
 import { Dot } from "@danieldesira/daniels-connect4-common/lib/enums/dot";
+import { initMongoClient } from "./mongo-utils";
+import { MongoClient } from "mongodb";
 
 export class Player {
 
@@ -26,7 +28,7 @@ export class Player {
         return opponent;
     }
 
-    public static getPlayerCountForCurrentGameId() {
+    public static getPlayerCountForCurrentGameId(mongoClient: MongoClient) {
         let playerCount = 0;
         Player.currentPlayers.forEach((p) => {
             if (p.gameId === Player.currentGameId) {
@@ -36,14 +38,25 @@ export class Player {
         return playerCount;
     }
 
-    public static updateGameId() {
-        let playerCount = Player.getPlayerCountForCurrentGameId();
-        if (playerCount > 1) {
-            Player.currentGameId++;
+    public static async updateGameId() {
+        const mongoClient = initMongoClient();
+        try {
+            await mongoClient.connect();
+            let playerCount = Player.getPlayerCountForCurrentGameId(mongoClient);
+            if (playerCount > 1) {
+                Player.currentGameId++;
+            }
+        } finally {
+            mongoClient.close();
         }
     }
 
-    public static connectNewPlayer(player: Player) {
+    public static async connectNewPlayer(mongoClient: MongoClient, player: Player) {
+        try {
+            let game = mongoClient.db()
+        } finally {
+            mongoClient.close();
+        }
         Player.currentPlayers.add(player);
     }
 
