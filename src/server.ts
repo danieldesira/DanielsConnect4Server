@@ -52,10 +52,14 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
             name:   name,
             ws:     ws
         };
-        Player.connectNewPlayer(mongoClient, newPlayer);
+        Player.connectNewPlayer(newPlayer);
         Player.updateGameId();
+
+        if (newPlayer.name) {
+            Player.savePlayer(mongoClient, newPlayer);
+        }
     
-        console.log('Player connected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
+        console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}`);
     
         let initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
     
@@ -73,6 +77,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
             // Update player name
             if (messageData.name) {
                 newPlayer.name = messageData.name;
+                Player.savePlayer(mongoClient, newPlayer);
             }
     
             opponent = Player.getOpponent(newPlayer);
@@ -125,7 +130,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
         ws.on('close', () => {
             Player.removePlayer(newPlayer);
             opponent = null;
-            console.log('Player disconnected: Game Id = ' + newPlayer.gameId + ', Color = ' + newPlayer.color);
+            console.log(`Player disconnected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}`);
         });
     
         ws.on('error', (er: string) => {
@@ -139,7 +144,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
 });
 
 console.log('Daniel\'s Connect4 Server 0.2 (Beta) running...');
-console.log('Listening on port: ' + port);
+console.log(`Listening on port: ${port}`);
 
 function getCurrentBoard(gameId: number) {
     let board: GameBoard | null = null;

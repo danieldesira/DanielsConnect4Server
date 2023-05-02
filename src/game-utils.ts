@@ -1,6 +1,7 @@
 import { Dot } from "@danieldesira/daniels-connect4-common/lib/enums/dot";
 import { initMongoClient } from "./mongo-utils";
-import { MongoClient } from "mongodb";
+import { Document, MatchKeysAndValues, MongoClient } from "mongodb";
+import config from "./config";
 
 export class Player {
 
@@ -51,12 +52,7 @@ export class Player {
         }
     }
 
-    public static async connectNewPlayer(mongoClient: MongoClient, player: Player) {
-        try {
-            let game = mongoClient.db()
-        } finally {
-            mongoClient.close();
-        }
+    public static connectNewPlayer(player: Player) {
         Player.currentPlayers.add(player);
     }
 
@@ -66,5 +62,35 @@ export class Player {
 
     public static getCurrentGameId() {
         return Player.currentGameId;
+    }
+
+    public static async savePlayer(mongoClient: MongoClient, player: Player) {
+        try {
+            await mongoClient.connect();
+            let game = await mongoClient.db(config.db).collection(config.collection).findOne({gameId: player.gameId});
+            let doc: MatchKeysAndValues<Document>;
+            
+            if (player.color === Dot.Red) {
+                doc = {
+                    playerRed: player.name
+                };
+            } else {
+                doc = {
+                    playerGreen: player.name
+                };
+            }
+
+            if (!game) {
+                await mongoClient.db(config.db).collection(config.collection).insertOne({gameId: player.gameId});
+            }
+
+            await mongoClient.db(config.db).collection(config.collection).updateOne({gameId: player.gameId}, {
+                $set: doc
+            });
+        } catch (err) {
+            console.error(err);
+        } finally {
+            mongoClient.close();
+        }
     }
 }
