@@ -23,17 +23,14 @@ export default class GameBoard {
     public async put(color: Dot, column: number): Promise<GameStatus> {
         try {
             await this.mongoClient.connect();
-            const queryResult = await this.mongoClient.db(config.db).collection(config.collection).find({gameId: this.gameId});
-            if (queryResult) {
-                //this.board = queryResult.board;
+            const queryResult = await this.mongoClient.db(config.db).collection(config.collection).findOne({gameId: this.gameId});
+            if (queryResult && queryResult.board) {
+                this.board = queryResult.board;
             }
             let row = BoardLogic.putDot(this.board, color, column);
             if (queryResult) {
-                this.insert(column, row, color);
-            } else {
-                await this.mongoClient.db(config.db).collection(config.collection).insertOne({
-                    gameId: this.gameId,
-                    board: this.board
+                await this.mongoClient.db(config.db).collection(config.collection).updateOne({ gameId: this.gameId }, {
+                    $set: { board: this.board }
                 });
             }
 

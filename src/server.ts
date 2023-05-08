@@ -34,12 +34,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
     try {
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
             gameId = parseInt(url.searchParams.get('gameId') ?? '0');
-            let colorString = url.searchParams.get('playerColor') ?? 'red';
-            if (colorString === Dot.Red) {
-                color = Dot.Red;
-            } else {
-                color = Dot.Green;
-            }
+            color = parseInt(url.searchParams.get('playerColor') ?? '1');
             name = url.searchParams.get('playerName') ?? '';
         } else {
             gameId = Player.getCurrentGameId();
