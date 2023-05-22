@@ -7,6 +7,8 @@ In the terminal, enter `` npm run build ``.
 If you are using Visual Studio Code, always make sure terminal is in `` Javascript Debug Terminal `` mode. Otherwise, breakpoints 
 will not be hit. To start up server, enter `` npm start `` in the terminal.
 
+Please note that you will be required to build and restart the server before testing any code changes.
+
 ## Contributors
 ### Developers
 Daniel Desira

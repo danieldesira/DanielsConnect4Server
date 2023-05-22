@@ -1,6 +1,6 @@
 import { BoardLogic } from '@danieldesira/daniels-connect4-common/lib/board-logic';
 import { Dot } from '@danieldesira/daniels-connect4-common/lib/enums/dot';
-import { FindCursor, MongoClient, WithId } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import { GameStatus } from './enums/game-status';
 import { initMongoClient } from './mongo-utils';
 import config from './config';
@@ -25,12 +25,12 @@ export default class GameBoard {
             await this.mongoClient.connect();
             const queryResult = await this.mongoClient.db(config.db).collection(config.collection).findOne({gameId: this.gameId});
             if (queryResult && queryResult.board) {
-                this.board = queryResult.board;
+                this.readMatrix(queryResult.board);
             }
             let row = BoardLogic.putDot(this.board, color, column);
             if (queryResult) {
                 await this.mongoClient.db(config.db).collection(config.collection).updateOne({ gameId: this.gameId }, {
-                    $set: { board: this.board }
+                    $push: { board: { row: row, col: column, val: color } }
                 });
             }
 
@@ -46,22 +46,10 @@ export default class GameBoard {
         }
     }
 
-    private readMatrix(results: FindCursor<WithId<Document>>) {
-        results.forEach((document) => {
-            //document.
-        });
-    }
-
-    private async insert(col: number, row: number, color: Dot) {
-        let doc = {
-            gameId: this.gameId,
-            col: col,
-            rows: {
-                row: row,
-                value: color
-            }
-        };
-        await this.mongoClient.db(config.db).collection(config.collection).insertOne(doc);
+    private readMatrix(boardEntries: Array<any>) {
+        for (const item of boardEntries) {
+            this.board[item.col][item.row] = item.val;
+        }
     }
 
 }
