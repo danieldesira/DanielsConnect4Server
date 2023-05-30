@@ -20,19 +20,29 @@ export default class GameBoard {
 
     public getGameId = () => this.gameId;
 
-    public async put(color: Dot, column: number): Promise<GameStatus> {
+    public async load() {
         try {
             await this.mongoClient.connect();
             const queryResult = await this.mongoClient.db(config.db).collection(config.collection).findOne({gameId: this.gameId});
             if (queryResult && queryResult.board) {
                 this.readMatrix(queryResult.board);
             }
+        } catch (err) {
+            console.error(`Error loading board for ${this.gameId}: ${err}`);
+            throw err;
+        } finally {
+            await this.mongoClient.close();
+        }
+    }
+
+    public async put(color: Dot, column: number): Promise<GameStatus> {
+        try {
+            await this.mongoClient.connect();
+            
             let row = BoardLogic.putDot(this.board, color, column);
-            if (queryResult) {
-                await this.mongoClient.db(config.db).collection(config.collection).updateOne({ gameId: this.gameId }, {
-                    $push: { board: { row: row, col: column, val: color } }
-                });
-            }
+            await this.mongoClient.db(config.db).collection(config.collection).updateOne({ gameId: this.gameId }, {
+                $push: { board: { row: row, col: column, val: color } }
+            });
 
             if (BoardLogic.countConsecutiveDots(this.board, column, row, color) >= 4) {
                 return GameStatus.Winner;
@@ -42,7 +52,7 @@ export default class GameBoard {
                 return GameStatus.InProgress;
             }
         } finally {
-            this.mongoClient.close();
+            await this.mongoClient.close();
         }
     }
 

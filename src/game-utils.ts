@@ -1,5 +1,4 @@
 import { Dot } from "@danieldesira/daniels-connect4-common/lib/enums/dot";
-import { initMongoClient } from "./mongo-utils";
 import { Document, MatchKeysAndValues, MongoClient } from "mongodb";
 import config from "./config";
 
@@ -29,7 +28,7 @@ export class Player {
         return opponent;
     }
 
-    public static getPlayerCountForCurrentGameId(mongoClient: MongoClient) {
+    public static getPlayerCountForCurrentGameId() {
         let playerCount = 0;
         Player.currentPlayers.forEach((p) => {
             if (p.gameId === Player.currentGameId) {
@@ -40,15 +39,9 @@ export class Player {
     }
 
     public static async updateGameId() {
-        const mongoClient = initMongoClient();
-        try {
-            await mongoClient.connect();
-            let playerCount = Player.getPlayerCountForCurrentGameId(mongoClient);
-            if (playerCount > 1) {
-                Player.currentGameId++;
-            }
-        } finally {
-            mongoClient.close();
+        let playerCount = Player.getPlayerCountForCurrentGameId();
+        if (playerCount > 1) {
+            Player.currentGameId++;
         }
     }
 
@@ -60,14 +53,28 @@ export class Player {
         Player.currentPlayers.delete(player);
     }
 
-    public static getCurrentGameId() {
+    public static async getCurrentGameId(mongoClient: MongoClient): Promise<number> {
+        if (Player.currentGameId === 0) {
+            try {
+                await mongoClient.connect();
+                const res = await mongoClient.db(config.db).collection(config.collection).find()
+                                            .sort({ gameId: -1 }).limit(1).project({ gameId: 1 })
+                                            .toArray();
+                const [{gameId}] = res;
+                Player.currentGameId = gameId + 1;
+            } catch (err) {
+                console.error(`Failed to fetch current game ID ${err}`);
+            } finally {
+                await mongoClient.close();
+            }
+        }
         return Player.currentGameId;
     }
 
     public static async savePlayer(mongoClient: MongoClient, player: Player) {
         try {
             await mongoClient.connect();
-            let game = await mongoClient.db(config.db).collection(config.collection).findOne({gameId: player.gameId});
+            const game = await mongoClient.db(config.db).collection(config.collection).findOne({gameId: player.gameId});
             let doc: MatchKeysAndValues<Document>;
             
             if (player.color === Dot.Red) {
@@ -90,7 +97,7 @@ export class Player {
         } catch (err) {
             console.error(err);
         } finally {
-            mongoClient.close();
+            await mongoClient.close();
         }
     }
 }

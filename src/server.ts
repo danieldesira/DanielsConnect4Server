@@ -14,7 +14,6 @@ import { initMongoClient } from './mongo-utils';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
-const boards: Array<GameBoard> = new Array();
 
 // Need this HTTP server to run for Adaptable.io hosting
 const server = http.createServer((req: any, res: { end: (arg0: string) => void; }) => {
@@ -22,8 +21,8 @@ const server = http.createServer((req: any, res: { end: (arg0: string) => void; 
 }).listen(port, '0.0.0.0');
 
 let socketServer = new Server({ server });
-socketServer.on('connection', (ws: any, req: { url: string; }) => {
-    let url = new URL('wss://example.com' + req.url);
+socketServer.on('connection', async (ws: any, req: { url: string; }) => {
+    const url = new URL(`wss://example.com${req.url}`);
 
     let gameId = 0;
     let color: Dot;
@@ -37,11 +36,11 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
             color = parseInt(url.searchParams.get('playerColor') ?? '1');
             name = url.searchParams.get('playerName') ?? '';
         } else {
-            gameId = Player.getCurrentGameId();
-            color = (Player.getPlayerCountForCurrentGameId(mongoClient) === 0 ? Dot.Red : Dot.Green);
+            gameId = await Player.getCurrentGameId(mongoClient);
+            color = (Player.getPlayerCountForCurrentGameId() === 0 ? Dot.Red : Dot.Green);
         }
     
-        let newPlayer: Player = {
+        const newPlayer: Player = {
             gameId: gameId,
             color:  color,
             name:   name,
@@ -54,7 +53,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
             Player.savePlayer(mongoClient, newPlayer);
         }
     
-        console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}`);
+        console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
     
         let initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
     
@@ -86,7 +85,8 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
                 }
     
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
-                    let board = getCurrentBoard(gameId);
+                    let board = new GameBoard(gameId);
+                    await board.load();
                     let status = await board.put(newPlayer.color, messageData.column)
                                             .catch((error) => console.error(`Something went wrong for game ${gameId}: ${error}`));
                     let message = new ActionMessage(messageData.column, messageData.action);
@@ -125,7 +125,7 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
         ws.on('close', () => {
             Player.removePlayer(newPlayer);
             opponent = null;
-            console.log(`Player disconnected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}`);
+            console.log(`Player disconnected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
         });
     
         ws.on('error', (er: string) => {
@@ -134,23 +134,9 @@ socketServer.on('connection', (ws: any, req: { url: string; }) => {
     } catch (error) {
         console.error(error);
     } finally {
-        mongoClient.close();
+        await mongoClient.close();
     }
 });
 
 console.log('Daniel\'s Connect4 Server 0.2 (Beta) running...');
 console.log(`Listening on port: ${port}`);
-
-function getCurrentBoard(gameId: number) {
-    let board: GameBoard | null = null;
-    boards.forEach(b => {
-        if (gameId === b.getGameId()) {
-            board = b;
-        }
-    });
-    if (!board) {
-        board = new GameBoard(gameId);
-        boards.push(board);
-    }
-    return board;
-}
