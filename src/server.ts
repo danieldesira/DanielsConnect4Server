@@ -1,15 +1,15 @@
 const { Server } = require('ws');
-import { Dot } from '@danieldesira/daniels-connect4-common/lib/enums/dot';
+import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
 import { Player } from './game-utils';
 import { GameStatus } from './enums/game-status';
-import { InitialMessage } from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
-import { ActionMessage } from '@danieldesira/daniels-connect4-common/lib/models/action-message';
-import { WinnerMessage } from '@danieldesira/daniels-connect4-common/lib/models/winner-message';
-import { TieMessage } from '@danieldesira/daniels-connect4-common/lib/models/tie-message';
-import { InactivityMessage } from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
-import { SkipTurnMessage } from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
-import { GameMessage } from '@danieldesira/daniels-connect4-common/lib/models/game-message';
+import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
+import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
+import WinnerMessage from '@danieldesira/daniels-connect4-common/lib/models/winner-message';
+import TieMessage from '@danieldesira/daniels-connect4-common/lib/models/tie-message';
+import InactivityMessage from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
+import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
+import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
 import { initMongoClient } from './mongo-utils';
 const http = require('http');
 
@@ -25,7 +25,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     const url = new URL(`wss://example.com${req.url}`);
 
     let gameId = 0;
-    let color: Dot;
+    let color: Coin;
     let name: string = '';
 
     const mongoClient = initMongoClient();
@@ -37,7 +37,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             name = url.searchParams.get('playerName') ?? '';
         } else {
             gameId = await Player.getCurrentGameId(mongoClient);
-            color = (Player.getPlayerCountForCurrentGameId() === 0 ? Dot.Red : Dot.Green);
+            color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
         }
     
         const newPlayer: Player = {

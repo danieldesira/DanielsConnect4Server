@@ -1,13 +1,13 @@
-import { BoardLogic } from '@danieldesira/daniels-connect4-common/lib/board-logic';
-import { Dot } from '@danieldesira/daniels-connect4-common/lib/enums/dot';
+import BoardLogic from '@danieldesira/daniels-connect4-common/lib/board-logic';
 import { MongoClient } from 'mongodb';
 import { GameStatus } from './enums/game-status';
 import { initMongoClient } from './mongo-utils';
 import config from './config';
+import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 
 export default class GameBoard {
 
-    private board: Array<Array<Dot>> = new Array(BoardLogic.columns);
+    private board: Array<Array<Coin>> = new Array(BoardLogic.columns);
     private gameId: number;
     private mongoClient: MongoClient;
 
@@ -35,16 +35,16 @@ export default class GameBoard {
         }
     }
 
-    public async put(color: Dot, column: number): Promise<GameStatus> {
+    public async put(color: Coin, column: number): Promise<GameStatus> {
         try {
             await this.mongoClient.connect();
             
-            let row = BoardLogic.putDot(this.board, color, column);
+            let row = BoardLogic.putCoin(this.board, color, column);
             await this.mongoClient.db(config.db).collection(config.collection).updateOne({ gameId: this.gameId }, {
                 $push: { board: { row: row, col: column, val: color } }
             });
 
-            if (BoardLogic.countConsecutiveDots(this.board, column, row, color) >= 4) {
+            if (BoardLogic.countConsecutiveCoins(this.board, column, row, color) >= 4) {
                 return GameStatus.Winner;
             } else if (BoardLogic.isBoardFull(this.board)) {
                 return GameStatus.Tie;

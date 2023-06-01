@@ -1,17 +1,17 @@
-import { Dot } from "@danieldesira/daniels-connect4-common/lib/enums/dot";
 import { Document, MatchKeysAndValues, MongoClient } from "mongodb";
 import config from "./config";
+import { Coin } from "@danieldesira/daniels-connect4-common/lib/enums/coin";
 
 export class Player {
 
     public gameId: number;
-    public color:  Dot;
+    public color:  Coin;
     public name:   string;
     public ws:     any;
 
     public constructor() {
         this.gameId = -1;
-        this.color = Dot.Red;
+        this.color = Coin.Red;
         this.name = '';
     }
 
@@ -77,7 +77,7 @@ export class Player {
             const game = await mongoClient.db(config.db).collection(config.collection).findOne({gameId: player.gameId});
             let doc: MatchKeysAndValues<Document>;
             
-            if (player.color === Dot.Red) {
+            if (player.color === Coin.Red) {
                 doc = {
                     playerRed: player.name
                 };

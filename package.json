@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@danieldesira/daniels-connect4-common": "^0.1.8",
+    "@danieldesira/daniels-connect4-common": "^0.1.10",
     "mongodb": "^5.2.0",
     "ws": "^8.12.0"
   },
