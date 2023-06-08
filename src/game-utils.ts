@@ -1,6 +1,6 @@
-import { Document, MatchKeysAndValues, MongoClient } from "mongodb";
-import config from "./config";
 import { Coin } from "@danieldesira/daniels-connect4-common/lib/enums/coin";
+import sqlConfig from "./sql-config";
+import * as sql from "mssql";
 
 export class Player {
 
@@ -53,51 +53,45 @@ export class Player {
         Player.currentPlayers.delete(player);
     }
 
-    public static async getCurrentGameId(mongoClient: MongoClient): Promise<number> {
+    public static async getCurrentGameId(): Promise<number> {
         if (Player.currentGameId === 0) {
+            let pool: sql.ConnectionPool | undefined;
             try {
-                await mongoClient.connect();
-                const res = await mongoClient.db(config.db).collection(config.collection).find()
-                                            .sort({ gameId: -1 }).limit(1).project({ gameId: 1 })
-                                            .toArray();
-                const [{gameId}] = res;
-                Player.currentGameId = gameId + 1;
+                pool = await sql.connect(sqlConfig);
+                const res = await sql.query('SELECT TOP 1 ID FROM Game ORDER BY ID DESC');
+                Player.currentGameId = parseInt(res.recordset[0]) + 1;
             } catch (err) {
                 console.error(`Failed to fetch current game ID ${err}`);
             } finally {
-                await mongoClient.close();
+                if (pool) {
+                    await pool.close();
+                    pool = undefined;
+                }
             }
         }
         return Player.currentGameId;
     }
 
-    public static async savePlayer(mongoClient: MongoClient, player: Player) {
+    public static async savePlayer(player: Player) {
+        let pool: sql.ConnectionPool | undefined;
         try {
-            await mongoClient.connect();
-            const game = await mongoClient.db(config.db).collection(config.collection).findOne({gameId: player.gameId});
-            let doc: MatchKeysAndValues<Document>;
+            pool = await sql.connect(sqlConfig);
+            let sqlStatement: string;
             
             if (player.color === Coin.Red) {
-                doc = {
-                    playerRed: player.name
-                };
+                sqlStatement = `UPDATE Game SET PlayerRed = '${player.color}' WHERE ID = ${player.gameId}`;
             } else {
-                doc = {
-                    playerGreen: player.name
-                };
+                sqlStatement = `UPDATE Game SET PlayerGreen = '${player.color}' WHERE ID = ${player.gameId}`;
             }
 
-            if (!game) {
-                await mongoClient.db(config.db).collection(config.collection).insertOne({gameId: player.gameId});
-            }
-
-            await mongoClient.db(config.db).collection(config.collection).updateOne({gameId: player.gameId}, {
-                $set: doc
-            });
+            await sql.query(sqlStatement);
         } catch (err) {
             console.error(err);
         } finally {
-            await mongoClient.close();
+            if (pool) {
+                await pool.close();
+                pool = undefined;
+            }
         }
     }
 }

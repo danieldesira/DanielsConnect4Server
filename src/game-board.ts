@@ -1,48 +1,47 @@
 import BoardLogic from '@danieldesira/daniels-connect4-common/lib/board-logic';
-import { MongoClient } from 'mongodb';
 import { GameStatus } from './enums/game-status';
-import { initMongoClient } from './mongo-utils';
-import config from './config';
+import sqlConfig from './sql-config';
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
+import * as sql from "mssql";
 
 export default class GameBoard {
 
     private board: Array<Array<Coin>> = new Array(BoardLogic.columns);
     private gameId: number;
-    private mongoClient: MongoClient;
 
     public constructor(gameId: number) {
         this.gameId = gameId;
         BoardLogic.initBoard(this.board);
-        
-        this.mongoClient = initMongoClient();
     }
 
     public getGameId = () => this.gameId;
 
     public async load() {
+        let pool: sql.ConnectionPool | undefined;
         try {
-            await this.mongoClient.connect();
-            const queryResult = await this.mongoClient.db(config.db).collection(config.collection).findOne({gameId: this.gameId});
-            if (queryResult && queryResult.board) {
-                this.readMatrix(queryResult.board);
+            pool = await sql.connect(sqlConfig);
+            const queryResult = await sql.query(`SELECT Col, Row, Color FROM Move WHERE GameID = ${this.gameId}`);
+            if (queryResult && queryResult.recordset.length > 0) {
+                this.readMatrix(queryResult.recordset);
             }
         } catch (err) {
             console.error(`Error loading board for ${this.gameId}: ${err}`);
             throw err;
         } finally {
-            await this.mongoClient.close();
+            if (pool) {
+                await pool.close();
+                pool = undefined;
+            }
         }
     }
 
     public async put(color: Coin, column: number): Promise<GameStatus> {
+        let pool: sql.ConnectionPool | undefined;
         try {
-            await this.mongoClient.connect();
+            pool = await sql.connect(sqlConfig);
             
             let row = BoardLogic.putCoin(this.board, color, column);
-            await this.mongoClient.db(config.db).collection(config.collection).updateOne({ gameId: this.gameId }, {
-                $push: { board: { row: row, col: column, val: color } }
-            });
+            await sql.query(`INSERT INTO Move (Col, Row, Color) VALUES (${column}, ${row}, ${color})`);
 
             if (BoardLogic.countConsecutiveCoins(this.board, column, row, color) >= 4) {
                 return GameStatus.Winner;
@@ -52,13 +51,16 @@ export default class GameBoard {
                 return GameStatus.InProgress;
             }
         } finally {
-            await this.mongoClient.close();
+            if (pool) {
+                await pool.close();
+                pool = undefined;
+            }
         }
     }
 
-    private readMatrix(boardEntries: Array<any>) {
+    private readMatrix(boardEntries: sql.IRecordSet<any>) {
         for (const item of boardEntries) {
-            this.board[item.col][item.row] = item.val;
+            this.board[item['Col']][item['Row']] = item['Color'];
         }
     }
 

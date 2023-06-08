@@ -10,7 +10,6 @@ import TieMessage from '@danieldesira/daniels-connect4-common/lib/models/tie-mes
 import InactivityMessage from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
 import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
 import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
-import { initMongoClient } from './mongo-utils';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -28,15 +27,13 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     let color: Coin;
     let name: string = '';
 
-    const mongoClient = initMongoClient();
-
     try {
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
             gameId = parseInt(url.searchParams.get('gameId') ?? '0');
             color = parseInt(url.searchParams.get('playerColor') ?? '1');
             name = url.searchParams.get('playerName') ?? '';
         } else {
-            gameId = await Player.getCurrentGameId(mongoClient);
+            gameId = await Player.getCurrentGameId();
             color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
         }
     
@@ -50,7 +47,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         Player.updateGameId();
 
         if (newPlayer.name) {
-            Player.savePlayer(mongoClient, newPlayer);
+            Player.savePlayer(newPlayer);
         }
     
         console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
@@ -71,7 +68,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             // Update player name
             if (messageData.name) {
                 newPlayer.name = messageData.name;
-                Player.savePlayer(mongoClient, newPlayer);
+                Player.savePlayer(newPlayer);
             }
     
             opponent = Player.getOpponent(newPlayer);
@@ -133,8 +130,6 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         });
     } catch (error) {
         console.error(error);
-    } finally {
-        await mongoClient.close();
     }
 });
 
