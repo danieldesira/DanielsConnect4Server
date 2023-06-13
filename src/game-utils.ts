@@ -1,6 +1,6 @@
 import { Coin } from "@danieldesira/daniels-connect4-common/lib/enums/coin";
-import sqlConfig from "./sql-config";
-import * as sql from "mssql";
+import { Client } from "pg";
+import appConfig from "./app-config";
 
 export class Player {
 
@@ -55,27 +55,24 @@ export class Player {
 
     public static async getCurrentGameId(): Promise<number> {
         if (Player.currentGameId === 0) {
-            let pool: sql.ConnectionPool | undefined;
+            const sql = new Client(appConfig.connectionString);
             try {
-                pool = await sql.connect(sqlConfig);
+                await sql.connect();
                 const res = await sql.query('SELECT TOP 1 ID FROM Game ORDER BY ID DESC');
-                Player.currentGameId = parseInt(res.recordset[0]) + 1;
+                Player.currentGameId = parseInt(res.rows[0].ID) + 1;
             } catch (err) {
                 console.error(`Failed to fetch current game ID ${err}`);
             } finally {
-                if (pool) {
-                    await pool.close();
-                    pool = undefined;
-                }
+                await sql.end();
             }
         }
         return Player.currentGameId;
     }
 
     public static async savePlayer(player: Player) {
-        let pool: sql.ConnectionPool | undefined;
+        const sql = new Client(appConfig.connectionString);
         try {
-            pool = await sql.connect(sqlConfig);
+            await sql.connect();
             let sqlStatement: string;
             
             if (player.color === Coin.Red) {
@@ -88,10 +85,7 @@ export class Player {
         } catch (err) {
             console.error(err);
         } finally {
-            if (pool) {
-                await pool.close();
-                pool = undefined;
-            }
+            await sql.end();
         }
     }
 }

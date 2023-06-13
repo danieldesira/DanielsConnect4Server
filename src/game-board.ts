@@ -1,8 +1,8 @@
 import BoardLogic from '@danieldesira/daniels-connect4-common/lib/board-logic';
 import { GameStatus } from './enums/game-status';
-import sqlConfig from './sql-config';
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
-import * as sql from "mssql";
+import { Client, QueryResultRow } from 'pg';
+import appConfig from './app-config';
 
 export default class GameBoard {
 
@@ -17,31 +17,28 @@ export default class GameBoard {
     public getGameId = () => this.gameId;
 
     public async load() {
-        let pool: sql.ConnectionPool | undefined;
+        const sql = new Client(appConfig.connectionString);
         try {
-            pool = await sql.connect(sqlConfig);
-            const queryResult = await sql.query(`SELECT Col, Row, Color FROM Move WHERE GameID = ${this.gameId}`);
-            if (queryResult && queryResult.recordset.length > 0) {
-                this.readMatrix(queryResult.recordset);
+            await sql.connect();
+            const queryResult = await sql.query(`SELECT col, row, color FROM Move WHERE game_id = ${this.gameId}`);
+            if (queryResult && queryResult.rows.length > 0) {
+                this.readMatrix(queryResult.rows);
             }
         } catch (err) {
             console.error(`Error loading board for ${this.gameId}: ${err}`);
             throw err;
         } finally {
-            if (pool) {
-                await pool.close();
-                pool = undefined;
-            }
+            await sql.end();
         }
     }
 
     public async put(color: Coin, column: number): Promise<GameStatus> {
-        let pool: sql.ConnectionPool | undefined;
+        const sql = new Client(appConfig.connectionString);
         try {
-            pool = await sql.connect(sqlConfig);
+            await sql.connect();
             
             let row = BoardLogic.putCoin(this.board, color, column);
-            await sql.query(`INSERT INTO Move (Col, Row, Color) VALUES (${column}, ${row}, ${color})`);
+            await sql.query(`INSERT INTO Move (col, row, color, game_id) VALUES (${column}, ${row}, ${color}, ${this.gameId})`);
 
             if (BoardLogic.countConsecutiveCoins(this.board, column, row, color) >= 4) {
                 return GameStatus.Winner;
@@ -51,16 +48,13 @@ export default class GameBoard {
                 return GameStatus.InProgress;
             }
         } finally {
-            if (pool) {
-                await pool.close();
-                pool = undefined;
-            }
+            await sql.end();
         }
     }
 
-    private readMatrix(boardEntries: sql.IRecordSet<any>) {
+    private readMatrix(boardEntries: QueryResultRow[]) {
         for (const item of boardEntries) {
-            this.board[item['Col']][item['Row']] = item['Color'];
+            this.board[item.col][item.row] = item.color;
         }
     }
 
