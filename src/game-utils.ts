@@ -58,8 +58,9 @@ export class Player {
             const sql = new Client(appConfig.connectionString);
             try {
                 await sql.connect();
-                const res = await sql.query('SELECT TOP 1 ID FROM Game ORDER BY ID DESC');
-                Player.currentGameId = parseInt(res.rows[0].ID) + 1;
+                const res = await sql.query('SELECT id FROM game ORDER BY id DESC LIMIT 1');
+                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) + 1 : 0);
+                await sql.query('INSERT INTO game (start) VALUES (current_timestamp)');
             } catch (err) {
                 console.error(`Failed to fetch current game ID ${err}`);
             } finally {
@@ -76,9 +77,9 @@ export class Player {
             let sqlStatement: string;
             
             if (player.color === Coin.Red) {
-                sqlStatement = `UPDATE Game SET PlayerRed = '${player.color}' WHERE ID = ${player.gameId}`;
+                sqlStatement = `UPDATE game SET player_red = '${player.name}' WHERE id = ${player.gameId}`;
             } else {
-                sqlStatement = `UPDATE Game SET PlayerGreen = '${player.color}' WHERE ID = ${player.gameId}`;
+                sqlStatement = `UPDATE game SET player_green = '${player.name}' WHERE id = ${player.gameId}`;
             }
 
             await sql.query(sqlStatement);
@@ -87,5 +88,17 @@ export class Player {
         } finally {
             await sql.end();
         }
+    }
+}
+
+export async function updateGameEnd(gameId: number) {
+    const sql = new Client(appConfig.connectionString);
+    try {
+        await sql.connect();
+        await sql.query(`UPDATE game SET finish = current_timestamp WHERE id = ${gameId}`);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
     }
 }

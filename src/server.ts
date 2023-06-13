@@ -1,7 +1,7 @@
 const { Server } = require('ws');
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
-import { Player } from './game-utils';
+import { Player, updateGameEnd } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
 import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
@@ -93,8 +93,10 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                         let data = null;
                         if (status === GameStatus.Winner) {
                             data = new WinnerMessage(newPlayer.color);
+                            updateGameEnd(gameId);
                         } else {
                             data = new TieMessage();
+                            updateGameEnd(gameId);
                         }
                         newPlayer.ws.send(JSON.stringify(data));
                         opponent.ws.send(JSON.stringify(data));
