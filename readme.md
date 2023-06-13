@@ -1,5 +1,9 @@
 Server for Daniel's Connect4 based on WebSockets.
 
+## Initial Setup
+Set the following environment variables, appropriately:
+* `PG_PASSWORD`
+
 ## Building
 In the terminal, enter `` npm run build ``.
 
