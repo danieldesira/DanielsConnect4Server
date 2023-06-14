@@ -38,7 +38,9 @@ export default class GameBoard {
             await sql.connect();
             
             let row = BoardLogic.putCoin(this.board, color, column);
-            await sql.query(`INSERT INTO Move (col, row, color, game_id) VALUES (${column}, ${row}, ${color}, ${this.gameId})`);
+            const stmt = `INSERT INTO Move (col, row, color, game_id, timestamp)
+                        VALUES (${column}, ${row}, ${color}, ${this.gameId}, current_timestamp)`;
+            await sql.query(stmt);
 
             if (BoardLogic.countConsecutiveCoins(this.board, column, row, color) >= 4) {
                 return GameStatus.Winner;

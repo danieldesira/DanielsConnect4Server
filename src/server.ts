@@ -1,7 +1,7 @@
 const { Server } = require('ws');
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
-import { Player, updateGameEnd } from './game-utils';
+import { Player, updateGameEnd, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
 import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
@@ -65,6 +65,8 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             currentTurnMessage.currentTurn = randomiseColor();
             ws.send(JSON.stringify(currentTurnMessage));
             opponent.ws.send(JSON.stringify(currentTurnMessage));
+
+            updateGameStart(gameId);
         }
     
         ws.send(JSON.stringify(initialDataToSendNewPlayer));

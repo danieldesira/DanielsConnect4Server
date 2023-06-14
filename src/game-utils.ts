@@ -92,6 +92,18 @@ export class Player {
 
 }
 
+export async function updateGameStart(gameId: number) {
+    const sql = new Client(appConfig.connectionString);
+    try {
+        await sql.connect();
+        await sql.query(`UPDATE game SET start = current_timestamp WHERE id = ${gameId}`);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
+}
+
 export async function updateGameEnd(gameId: number) {
     const sql = new Client(appConfig.connectionString);
     try {
@@ -108,7 +120,7 @@ async function createNewGame(gameId: number) {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
-        await sql.query(`INSERT INTO game (id, start) VALUES (${gameId}, current_timestamp)`);
+        await sql.query(`INSERT INTO game (id) VALUES (${gameId})`);
     } catch (err) {
         console.error(err);
     } finally {
