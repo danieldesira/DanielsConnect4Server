@@ -42,6 +42,7 @@ export class Player {
         let playerCount = Player.getPlayerCountForCurrentGameId();
         if (playerCount > 1) {
             Player.currentGameId++;
+            await createNewGame(Player.currentGameId);
         }
     }
 
@@ -59,8 +60,7 @@ export class Player {
             try {
                 await sql.connect();
                 const res = await sql.query('SELECT id FROM game ORDER BY id DESC LIMIT 1');
-                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) + 1 : 0);
-                await sql.query('INSERT INTO game (start) VALUES (current_timestamp)');
+                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) : 0);
             } catch (err) {
                 console.error(`Failed to fetch current game ID ${err}`);
             } finally {
@@ -89,6 +89,7 @@ export class Player {
             await sql.end();
         }
     }
+
 }
 
 export async function updateGameEnd(gameId: number) {
@@ -96,6 +97,18 @@ export async function updateGameEnd(gameId: number) {
     try {
         await sql.connect();
         await sql.query(`UPDATE game SET finish = current_timestamp WHERE id = ${gameId}`);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
+}
+
+async function createNewGame(gameId: number) {
+    const sql = new Client(appConfig.connectionString);
+    try {
+        await sql.connect();
+        await sql.query(`INSERT INTO game (id, start) VALUES (${gameId}, current_timestamp)`);
     } catch (err) {
         console.error(err);
     } finally {

@@ -21,6 +21,7 @@ Daniel Desira
 ### 0.2 (Beta - )
 * Converted code to TypeScript
 * Board is now replicated on server through `` danieldesira/daniels-connect4-common `` NPM package
+* Randomise initial color
 
 ### 0.1.2 (Alpha - 27/03/2023)
 * Reconnect disconnected clients

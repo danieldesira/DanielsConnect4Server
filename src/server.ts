@@ -10,6 +10,8 @@ import TieMessage from '@danieldesira/daniels-connect4-common/lib/models/tie-mes
 import InactivityMessage from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
 import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
 import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
+import CurrentTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/current-turn-message';
+import randomiseColor from '@danieldesira/daniels-connect4-common/lib/randomise';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -44,20 +46,25 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             ws:     ws
         };
         Player.connectNewPlayer(newPlayer);
-        Player.updateGameId();
+        await Player.updateGameId();
 
         if (newPlayer.name) {
-            Player.savePlayer(newPlayer);
+            await Player.savePlayer(newPlayer);
         }
     
         console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
     
         let initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
     
-        // If opponent already connected, also send name of opponent to the new player
+        // If opponent already connected, the game has started
         let opponent = Player.getOpponent(newPlayer);
         if (opponent) {
             initialDataToSendNewPlayer.opponentName = opponent.name;
+
+            const currentTurnMessage = new CurrentTurnMessage();
+            currentTurnMessage.currentTurn = randomiseColor();
+            ws.send(JSON.stringify(currentTurnMessage));
+            opponent.ws.send(JSON.stringify(currentTurnMessage));
         }
     
         ws.send(JSON.stringify(initialDataToSendNewPlayer));
@@ -82,11 +89,11 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                 }
     
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
-                    let board = new GameBoard(gameId);
+                    const board = new GameBoard(gameId);
                     await board.load();
-                    let status = await board.put(newPlayer.color, messageData.column)
+                    const status = await board.put(newPlayer.color, messageData.column)
                                             .catch((error) => console.error(`Something went wrong for game ${gameId}: ${error}`));
-                    let message = new ActionMessage(messageData.column, messageData.action);
+                    const message = new ActionMessage(messageData.column, messageData.action);
                     opponent.ws.send(JSON.stringify(message));
     
                     if (status !== GameStatus.InProgress) {
@@ -104,17 +111,17 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                 }
     
                 if (messageData.action === 'mousemove' && GameMessage.isActionMessage(messageData)) {
-                    let message = new ActionMessage(messageData.column, messageData.action);
+                    const message = new ActionMessage(messageData.column, messageData.action);
                     opponent.ws.send(JSON.stringify(message));
                 }
     
                 if (GameMessage.isSkipTurnMessage(messageData)) {
-                    let message = new SkipTurnMessage(true, messageData.currentTurn);
+                    const message = new SkipTurnMessage(true, messageData.currentTurn);
                     opponent.ws.send(JSON.stringify(message));
                 }
     
                 if (GameMessage.isInactivityMessage(messageData)) {
-                    let message = new InactivityMessage(true, messageData.currentTurn);
+                    const message = new InactivityMessage(true, messageData.currentTurn);
                     opponent.ws.send(JSON.stringify(message));
                 }
             }
