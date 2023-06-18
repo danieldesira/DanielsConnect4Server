@@ -133,7 +133,6 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     
         ws.on('close', () => {
             Player.removePlayer(newPlayer);
-            opponent = null;
             console.log(`Player disconnected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
 
             let disconnectCountdown: number = 30;
@@ -142,7 +141,10 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                     disconnectCountdown--;
                     if (disconnectCountdown <= 0) {
                         clearInterval(interval);
-                        opponent?.ws.send(new DisconnectMessage());
+                        if (!opponent) {
+                            opponent = Player.getOpponent(newPlayer);
+                        }
+                        opponent?.ws.send(JSON.stringify(new DisconnectMessage()));
                         await updateGameFinish(gameId);
                     }
                 } else {
