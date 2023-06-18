@@ -1,7 +1,7 @@
 const { Server } = require('ws');
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
-import { Player, updateGameEnd, updateGameStart } from './game-utils';
+import { Player, updateGameFinish, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
 import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
@@ -12,6 +12,7 @@ import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/sk
 import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
 import CurrentTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/current-turn-message';
 import randomiseColor from '@danieldesira/daniels-connect4-common/lib/randomise';
+import DisconnectMessage from '@danieldesira/daniels-connect4-common/lib/models/disconnect-message';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -102,10 +103,10 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                         let data = null;
                         if (status === GameStatus.Winner) {
                             data = new WinnerMessage(newPlayer.color);
-                            updateGameEnd(gameId);
+                            updateGameFinish(gameId);
                         } else {
                             data = new TieMessage();
-                            updateGameEnd(gameId);
+                            updateGameFinish(gameId);
                         }
                         newPlayer.ws.send(JSON.stringify(data));
                         opponent.ws.send(JSON.stringify(data));
@@ -134,6 +135,20 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             Player.removePlayer(newPlayer);
             opponent = null;
             console.log(`Player disconnected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
+
+            let disconnectCountdown: number = 30;
+            let interval: NodeJS.Timer = setInterval(async () => {
+                if (!Player.isPlayerConnected(newPlayer)) {
+                    disconnectCountdown--;
+                    if (disconnectCountdown <= 0) {
+                        clearInterval(interval);
+                        opponent?.ws.send(new DisconnectMessage());
+                        await updateGameFinish(gameId);
+                    }
+                } else {
+                    clearInterval(interval);
+                }
+            }, 1000);
         });
     
         ws.on('error', (er: string) => {

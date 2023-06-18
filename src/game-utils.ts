@@ -90,6 +90,16 @@ export class Player {
         }
     }
 
+    public static isPlayerConnected(player: Player) : boolean {
+        let found: boolean = false;
+        Player.currentPlayers.forEach((p) => {
+            if (p.gameId === player.gameId && p.color === player.color) {
+                found = true;
+            }
+        });
+        return found;
+    }
+
 }
 
 export async function updateGameStart(gameId: number) {
@@ -104,7 +114,7 @@ export async function updateGameStart(gameId: number) {
     }
 }
 
-export async function updateGameEnd(gameId: number) {
+export async function updateGameFinish(gameId: number) {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
