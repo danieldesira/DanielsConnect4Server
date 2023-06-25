@@ -122,11 +122,6 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                     const message = new SkipTurnMessage(true, messageData.currentTurn);
                     opponent.ws.send(JSON.stringify(message));
                 }
-    
-                if (GameMessage.isInactivityMessage(messageData)) {
-                    const message = new InactivityMessage(true, messageData.currentTurn);
-                    opponent.ws.send(JSON.stringify(message));
-                }
             }
             
         });
