@@ -1,13 +1,12 @@
 const { Server } = require('ws');
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
-import { Player, updateGameFinish, updateGameStart } from './game-utils';
+import { Player, createSkipTurnInterval, updateGameFinish, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
 import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
 import WinnerMessage from '@danieldesira/daniels-connect4-common/lib/models/winner-message';
 import TieMessage from '@danieldesira/daniels-connect4-common/lib/models/tie-message';
-import InactivityMessage from '@danieldesira/daniels-connect4-common/lib/models/inactivity-message';
 import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
 import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
 import CurrentTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/current-turn-message';
@@ -71,7 +70,13 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         }
     
         ws.send(JSON.stringify(initialDataToSendNewPlayer));
-    
+
+        let skipTurnSecondCount: number = 0;
+        let currentTurnCountInterval = createSkipTurnInterval(skipTurnSecondCount, () => {
+            // send message to current player...
+            // send message to opponent...
+        });
+
         ws.on('message', async (data: string) => {
             let messageData = JSON.parse(data);
     
@@ -92,6 +97,8 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                 }
     
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
+                    skipTurnSecondCount = 0;
+                    
                     const board = new GameBoard(gameId);
                     await board.load();
                     const status = await board.put(newPlayer.color, messageData.column)
