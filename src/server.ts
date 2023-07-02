@@ -10,8 +10,9 @@ import TieMessage from '@danieldesira/daniels-connect4-common/lib/models/tie-mes
 import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
 import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
 import CurrentTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/current-turn-message';
-import randomiseColor from '@danieldesira/daniels-connect4-common/lib/randomise';
 import DisconnectMessage from '@danieldesira/daniels-connect4-common/lib/models/disconnect-message';
+import { randomiseColor, switchTurn } from '@danieldesira/daniels-connect4-common/lib/player-turn';
+import ErrorMessage from '@danieldesira/daniels-connect4-common/lib/models/error-message';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -21,13 +22,14 @@ const server = http.createServer((req: any, res: { end: (arg0: string) => void; 
     res.end('Daniel\'s Connect4 Server is running!');
 }).listen(port, '0.0.0.0');
 
-let socketServer = new Server({ server });
+const socketServer = new Server({ server });
 socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     const url = new URL(`wss://example.com${req.url}`);
 
     let gameId = 0;
     let color: Coin;
     let name: string = '';
+    let currentTurn: Coin;
 
     try {
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
@@ -61,8 +63,9 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         if (opponent) {
             initialDataToSendNewPlayer.opponentName = opponent.name;
 
+            currentTurn = randomiseColor();
             const currentTurnMessage = new CurrentTurnMessage();
-            currentTurnMessage.currentTurn = randomiseColor();
+            currentTurnMessage.currentTurn = currentTurn;
             ws.send(JSON.stringify(currentTurnMessage));
             opponent.ws.send(JSON.stringify(currentTurnMessage));
 
@@ -72,9 +75,17 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         ws.send(JSON.stringify(initialDataToSendNewPlayer));
 
         let skipTurnSecondCount: number = 0;
-        let currentTurnCountInterval = createSkipTurnInterval(skipTurnSecondCount, () => {
-            // send message to current player...
-            // send message to opponent...
+        createSkipTurnInterval(skipTurnSecondCount, () => {
+            opponent = Player.getOpponent(newPlayer);
+            if (opponent) {
+                currentTurn = switchTurn(currentTurn);
+
+                const message = new SkipTurnMessage(true, currentTurn);
+                newPlayer.ws.send(JSON.stringify(message));
+                opponent.ws.send(JSON.stringify(message));
+            } else {
+                skipTurnSecondCount = 0;
+            }
         });
 
         ws.on('message', async (data: string) => {
@@ -98,35 +109,31 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
                     skipTurnSecondCount = 0;
+                    currentTurn = switchTurn(messageData.color);
                     
                     const board = new GameBoard(gameId);
                     await board.load();
-                    const status = await board.put(newPlayer.color, messageData.column)
-                                            .catch((error) => console.error(`Something went wrong for game ${gameId}: ${error}`));
-                    const message = new ActionMessage(messageData.column, messageData.action);
+                    const status = await board.put(newPlayer.color, messageData.column);
+                    const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
                     opponent.ws.send(JSON.stringify(message));
-    
+
                     if (status !== GameStatus.InProgress) {
-                        let data = null;
+                        let data: GameMessage;
                         if (status === GameStatus.Winner) {
                             data = new WinnerMessage(newPlayer.color);
-                            updateGameFinish(gameId);
-                        } else {
+                        } else if (status === GameStatus.Tie) {
                             data = new TieMessage();
-                            updateGameFinish(gameId);
+                        } else {
+                            data = new ErrorMessage('ERR001: Error happened during game save. Please file a bug.');
                         }
                         newPlayer.ws.send(JSON.stringify(data));
                         opponent.ws.send(JSON.stringify(data));
+                        await updateGameFinish(gameId);
                     }
                 }
     
                 if (messageData.action === 'mousemove' && GameMessage.isActionMessage(messageData)) {
-                    const message = new ActionMessage(messageData.column, messageData.action);
-                    opponent.ws.send(JSON.stringify(message));
-                }
-    
-                if (GameMessage.isSkipTurnMessage(messageData)) {
-                    const message = new SkipTurnMessage(true, messageData.currentTurn);
+                    const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
                     opponent.ws.send(JSON.stringify(message));
                 }
             }

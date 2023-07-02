@@ -142,6 +142,7 @@ export function createSkipTurnInterval(seconds: number, callback: Function) {
     return setInterval(() => {
         seconds++;
         if (seconds >= 60) {
+            seconds = 0;
             callback();
         }
     }, 1000);

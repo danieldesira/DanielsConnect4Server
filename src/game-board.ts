@@ -32,7 +32,7 @@ export default class GameBoard {
         }
     }
 
-    public async put(color: Coin, column: number): Promise<GameStatus> {
+    public async put(color: Coin, column: number): Promise<GameStatus | undefined> {
         const sql = new Client(appConfig.connectionString);
         try {
             await sql.connect();
@@ -49,6 +49,8 @@ export default class GameBoard {
             } else {
                 return GameStatus.InProgress;
             }
+        } catch (error) {
+            console.error(`Something went wrong for game ${this.gameId}: ${error}`);
         } finally {
             await sql.end();
         }
