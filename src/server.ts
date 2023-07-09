@@ -11,8 +11,8 @@ import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/sk
 import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
 import CurrentTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/current-turn-message';
 import DisconnectMessage from '@danieldesira/daniels-connect4-common/lib/models/disconnect-message';
-import { randomiseColor, switchTurn } from '@danieldesira/daniels-connect4-common/lib/player-turn';
 import ErrorMessage from '@danieldesira/daniels-connect4-common/lib/models/error-message';
+import { Game } from './game';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -29,7 +29,6 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     let gameId = 0;
     let color: Coin;
     let name: string = '';
-    let currentTurn: Coin;
 
     try {
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
@@ -45,7 +44,8 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             gameId: gameId,
             color:  color,
             name:   name,
-            ws:     ws
+            ws:     ws,
+            game:   null
         };
         Player.connectNewPlayer(newPlayer);
         await Player.updateGameId();
@@ -63,9 +63,18 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         if (opponent) {
             initialDataToSendNewPlayer.opponentName = opponent.name;
 
-            currentTurn = randomiseColor();
+            const game = new Game(gameId);
+            game.handleSkipTurn = () => {
+                const message = new SkipTurnMessage(true, opponent?.game?.getCurrentTurn() ?? Coin.Empty);
+                newPlayer.ws.send(JSON.stringify(message));
+                opponent?.ws.send(JSON.stringify(message));
+            };
+            opponent.game = game;
+            newPlayer.game = game;
+
+
             const currentTurnMessage = new CurrentTurnMessage();
-            currentTurnMessage.currentTurn = currentTurn;
+            currentTurnMessage.currentTurn = game.getCurrentTurn();
             ws.send(JSON.stringify(currentTurnMessage));
             opponent.ws.send(JSON.stringify(currentTurnMessage));
 
@@ -78,18 +87,16 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         createSkipTurnInterval(skipTurnSecondCount, () => {
             opponent = Player.getOpponent(newPlayer);
             if (opponent) {
-                currentTurn = switchTurn(currentTurn);
+                opponent.game?.switchTurn();
 
-                const message = new SkipTurnMessage(true, currentTurn);
-                newPlayer.ws.send(JSON.stringify(message));
-                opponent.ws.send(JSON.stringify(message));
+                
             } else {
                 skipTurnSecondCount = 0;
             }
         });
 
         ws.on('message', async (data: string) => {
-            let messageData = JSON.parse(data);
+            const messageData = JSON.parse(data);
     
             // Update player name
             if (messageData.name) {
@@ -109,7 +116,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
                     skipTurnSecondCount = 0;
-                    currentTurn = switchTurn(messageData.color);
+                    opponent.game?.switchTurn();
                     
                     const board = new GameBoard(gameId);
                     await board.load();

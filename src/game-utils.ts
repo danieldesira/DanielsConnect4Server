@@ -1,6 +1,7 @@
 import { Coin } from "@danieldesira/daniels-connect4-common/lib/enums/coin";
 import { Client } from "pg";
 import appConfig from "./app-config";
+import { Game } from "./game";
 
 export class Player {
 
@@ -8,11 +9,13 @@ export class Player {
     public color:  Coin;
     public name:   string;
     public ws:     any;
+    public game:   Game | null;
 
     public constructor() {
         this.gameId = -1;
         this.color = Coin.Red;
         this.name = '';
+        this.game = null;
     }
 
     private static currentPlayers: Set<Player> = new Set();

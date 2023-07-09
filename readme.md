@@ -22,6 +22,9 @@ Daniel Desira
 * Converted code to TypeScript
 * Board is now replicated on server through `` danieldesira/daniels-connect4-common `` NPM package
 * Randomise initial color
+* Store game progress in a Postgres database
+* Automatically end game if a player is disconnected for at least 30 seconds
+* Skip turn is now handled by server
 
 ### 0.1.2 (Alpha - 27/03/2023)
 * Reconnect disconnected clients
