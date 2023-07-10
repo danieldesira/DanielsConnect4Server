@@ -1,7 +1,7 @@
 const { Server } = require('ws');
 import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
-import { Player, createSkipTurnInterval, updateGameFinish, updateGameStart } from './game-utils';
+import { Player, updateGameFinish, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
 import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
@@ -72,7 +72,6 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             opponent.game = game;
             newPlayer.game = game;
 
-
             const currentTurnMessage = new CurrentTurnMessage();
             currentTurnMessage.currentTurn = game.getCurrentTurn();
             ws.send(JSON.stringify(currentTurnMessage));
@@ -82,18 +81,6 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         }
     
         ws.send(JSON.stringify(initialDataToSendNewPlayer));
-
-        let skipTurnSecondCount: number = 0;
-        createSkipTurnInterval(skipTurnSecondCount, () => {
-            opponent = Player.getOpponent(newPlayer);
-            if (opponent) {
-                opponent.game?.switchTurn();
-
-                
-            } else {
-                skipTurnSecondCount = 0;
-            }
-        });
 
         ws.on('message', async (data: string) => {
             const messageData = JSON.parse(data);
@@ -115,7 +102,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                 }
     
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
-                    skipTurnSecondCount = 0;
+                    opponent.game?.resetSkipTurnSecondCount();
                     opponent.game?.switchTurn();
                     
                     const board = new GameBoard(gameId);
