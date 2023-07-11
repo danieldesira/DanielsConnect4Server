@@ -37,7 +37,7 @@ export default class GameBoard {
         try {
             await sql.connect();
             
-            let row = BoardLogic.putCoin(this.board, color, column);
+            const row = BoardLogic.putCoin(this.board, color, column);
             const stmt = `INSERT INTO Move (col, row, color, game_id, timestamp)
                         VALUES (${column}, ${row}, ${color}, ${this.gameId}, current_timestamp)`;
             await sql.query(stmt);

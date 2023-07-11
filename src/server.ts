@@ -56,7 +56,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     
         console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
     
-        let initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
+        const initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
     
         // If opponent already connected, the game has started
         let opponent = Player.getOpponent(newPlayer);
@@ -139,7 +139,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             console.log(`Player disconnected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
 
             let disconnectCountdown: number = 30;
-            let interval: NodeJS.Timer = setInterval(async () => {
+            const interval: NodeJS.Timer = setInterval(async () => {
                 if (!Player.isPlayerConnected(newPlayer)) {
                     disconnectCountdown--;
                     if (disconnectCountdown <= 0) {
@@ -157,10 +157,10 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         });
     
         ws.on('error', (er: string) => {
-            console.log('Error: ' + er);
+            console.error(`Error: ${er}`);
         });
     } catch (error) {
-        console.error(error);
+        console.error(`Error: ${error}`);
     }
 });
 

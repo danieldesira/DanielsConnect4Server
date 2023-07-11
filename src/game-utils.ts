@@ -42,7 +42,7 @@ export class Player {
     }
 
     public static async updateGameId() {
-        let playerCount = Player.getPlayerCountForCurrentGameId();
+        const playerCount = Player.getPlayerCountForCurrentGameId();
         if (playerCount > 1) {
             Player.currentGameId++;
             await createNewGame(Player.currentGameId);

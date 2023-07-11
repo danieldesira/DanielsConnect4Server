@@ -7,6 +7,7 @@ export class Game {
     private skipTurnSecondCount: number;
     private currentTurn: Coin;
     public handleSkipTurn: Function | null;
+    private static maxSkipTurnCount: number = 60;
     
     public constructor(gameId: number) {
         this.gameId = gameId;
@@ -18,9 +19,9 @@ export class Game {
 
     private skipTurnIntervalCallback = () => {
         this.skipTurnSecondCount++;
-        if (this.skipTurnSecondCount >= 60) {
-            this.skipTurnSecondCount = 0;
-            this.currentTurn = switchTurn(this.currentTurn);
+        if (this.skipTurnSecondCount >= Game.maxSkipTurnCount) {
+            this.resetSkipTurnSecondCount();
+            this.switchTurn();
             if (this.handleSkipTurn) {
                 this.handleSkipTurn();
             }
