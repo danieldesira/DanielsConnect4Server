@@ -1,6 +1,5 @@
-import BoardLogic from '@danieldesira/daniels-connect4-common/lib/board-logic';
+import BoardLogic, { Coin } from '@danieldesira/daniels-connect4-common';
 import { GameStatus } from './enums/game-status';
-import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import { Client, QueryResultRow } from 'pg';
 import appConfig from './app-config';
 

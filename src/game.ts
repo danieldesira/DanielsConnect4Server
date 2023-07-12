@@ -1,5 +1,4 @@
-import { Coin } from "@danieldesira/daniels-connect4-common/lib/enums/coin";
-import { randomiseColor, switchTurn } from "@danieldesira/daniels-connect4-common/lib/player-turn";
+import { Coin, randomiseColor, skipTurnMaxWait, switchTurn } from "@danieldesira/daniels-connect4-common";
 
 export class Game {
     
@@ -7,7 +6,6 @@ export class Game {
     private skipTurnSecondCount: number;
     private currentTurn: Coin;
     public handleSkipTurn: Function | null;
-    private static maxSkipTurnCount: number = 60;
     
     public constructor(gameId: number) {
         this.gameId = gameId;
@@ -19,7 +17,7 @@ export class Game {
 
     private skipTurnIntervalCallback = () => {
         this.skipTurnSecondCount++;
-        if (this.skipTurnSecondCount >= Game.maxSkipTurnCount) {
+        if (this.skipTurnSecondCount >= skipTurnMaxWait) {
             this.resetSkipTurnSecondCount();
             this.switchTurn();
             if (this.handleSkipTurn) {

@@ -1,4 +1,4 @@
-import { Coin } from "@danieldesira/daniels-connect4-common/lib/enums/coin";
+import { Coin } from "@danieldesira/daniels-connect4-common";
 import { Client } from "pg";
 import appConfig from "./app-config";
 import { Game } from "./game";

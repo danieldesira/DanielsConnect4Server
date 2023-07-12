@@ -1,18 +1,9 @@
 const { Server } = require('ws');
-import { Coin } from '@danieldesira/daniels-connect4-common/lib/enums/coin';
 import GameBoard from './game-board';
 import { Player, updateGameFinish, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
-import InitialMessage from '@danieldesira/daniels-connect4-common/lib/models/initial-message';
-import ActionMessage from '@danieldesira/daniels-connect4-common/lib/models/action-message';
-import WinnerMessage from '@danieldesira/daniels-connect4-common/lib/models/winner-message';
-import TieMessage from '@danieldesira/daniels-connect4-common/lib/models/tie-message';
-import SkipTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/skip-turn-message';
-import GameMessage from '@danieldesira/daniels-connect4-common/lib/models/game-message';
-import CurrentTurnMessage from '@danieldesira/daniels-connect4-common/lib/models/current-turn-message';
-import DisconnectMessage from '@danieldesira/daniels-connect4-common/lib/models/disconnect-message';
-import ErrorMessage from '@danieldesira/daniels-connect4-common/lib/models/error-message';
 import { Game } from './game';
+import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
