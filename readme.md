@@ -1,15 +1,32 @@
 Server for Daniel's Connect4 based on WebSockets.
 
+## Initial Setup
+Set the following environment variables, appropriately:
+* `PG_PASSWORD`
+
+## Building
+In the terminal, enter `` npm run build ``.
+
 ## Debugging
 If you are using Visual Studio Code, always make sure terminal is in `` Javascript Debug Terminal `` mode. Otherwise, breakpoints 
-will not be hit.
+will not be hit. To start up server, enter `` npm start `` in the terminal.
+
+Please note that you will be required to build and restart the server before testing any code changes.
 
 ## Contributors
 ### Developers
 Daniel Desira
 
 ## Version History
-### 0.1.2 (Alpha - )
+### 0.2 (Beta - )
+* Converted code to TypeScript
+* Board is now replicated on server through `` danieldesira/daniels-connect4-common `` NPM package
+* Randomise initial color
+* Store game progress in a Postgres database
+* Automatically end game if a player is disconnected for at least 30 seconds
+* Skip turn is now handled by server
+
+### 0.1.2 (Alpha - 27/03/2023)
 * Reconnect disconnected clients
 * Code cleanup and some focus on efficiency
 * Handle inactivity-related messages
