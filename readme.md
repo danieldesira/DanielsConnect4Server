@@ -2,7 +2,7 @@ Server for Daniel's Connect4 based on WebSockets.
 
 ## Initial Setup
 Set the following environment variables, appropriately:
-* `PG_PASSWORD`
+* `DATABASE_URL`: Please note that `adaptable.io` provides this by default. 
 
 ## Building
 In the terminal, enter `` npm run build ``.
@@ -18,7 +18,10 @@ Please note that you will be required to build and restart the server before tes
 Daniel Desira
 
 ## Version History
-### 0.2 (Beta - )
+### 0.2.1 (Beta - 18/07/2023)
+* Applied fix for adaptable.io deployment: Using the `DATABASE_URL` variable that the platform provides fixing DB/SSL error
+
+### 0.2 (Beta - 18/07/2023)
 * Converted code to TypeScript
 * Board is now replicated on server through `` danieldesira/daniels-connect4-common `` NPM package
 * Randomise initial color
