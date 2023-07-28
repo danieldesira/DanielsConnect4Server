@@ -4,6 +4,7 @@ import { Player, updateGameFinish, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
+import { authenticateUser } from './authentication';
 const http = require('http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
@@ -29,6 +30,15 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         } else {
             gameId = await Player.getCurrentGameId();
             color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
+            if (url.searchParams.has('token') && url.searchParams.has('service')) {
+                const token = url.searchParams.get('token') ?? '';
+                const service = url.searchParams.get('service');
+                if (service === 'google') {
+                    authenticateUser(token, service);
+                }
+            } else {
+                ws.close();
+            }
         }
     
         const newPlayer: Player = {
@@ -76,22 +86,9 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         ws.on('message', async (data: string) => {
             const messageData = JSON.parse(data);
     
-            // Update player name
-            if (messageData.name) {
-                newPlayer.name = messageData.name;
-                Player.savePlayer(newPlayer);
-            }
-    
             opponent = Player.getOpponent(newPlayer);
     
             if (opponent) {
-                // Handle player name update
-                if (messageData.name) {
-                    opponent.ws.send(JSON.stringify({
-                        opponentName: newPlayer.name
-                    }));
-                }
-    
                 if (messageData.action === 'click' && GameMessage.isActionMessage(messageData)) {
                     opponent.game?.resetSkipTurnSecondCount();
                     opponent.game?.switchTurn();
@@ -155,5 +152,5 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     }
 });
 
-console.log('Daniel\'s Connect4 Server 0.2 (Beta) running...');
+console.log('Daniel\'s Connect4 Server 0.2.2 (Beta) running...');
 console.log(`Listening on port: ${port}`);
