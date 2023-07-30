@@ -34,7 +34,12 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                 const token = url.searchParams.get('token') ?? '';
                 const service = url.searchParams.get('service');
                 if (service === 'google') {
-                    authenticateUser(token, service);
+                    const result = await authenticateUser(token, service);
+                    if (result) {
+                        name = result.trim().substring(0, 10);
+                    } else {
+                        ws.close();
+                    }
                 }
             } else {
                 ws.close();
@@ -57,7 +62,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     
         console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
     
-        const initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, '', newPlayer.color);
+        const initialDataToSendNewPlayer = new InitialMessage(newPlayer.gameId, newPlayer.name, '', newPlayer.color);
     
         // If opponent already connected, the game has started
         let opponent = Player.getOpponent(newPlayer);
