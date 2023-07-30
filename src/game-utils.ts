@@ -7,6 +7,7 @@ export class Player {
 
     public gameId: number;
     public color:  Coin;
+    public id:     number;
     public name:   string;
     public ws:     any;
     public game:   Game | null;
@@ -16,6 +17,7 @@ export class Player {
         this.color = Coin.Red;
         this.name = '';
         this.game = null;
+        this.id = -1;
     }
 
     private static currentPlayers: Set<Player> = new Set();
@@ -80,9 +82,9 @@ export class Player {
             let sqlStatement: string;
             
             if (player.color === Coin.Red) {
-                sqlStatement = `UPDATE game SET player_red = '${player.name}' WHERE id = ${player.gameId}`;
+                sqlStatement = `UPDATE game SET player_red = ${player.id} WHERE id = ${player.gameId}`;
             } else {
-                sqlStatement = `UPDATE game SET player_green = '${player.name}' WHERE id = ${player.gameId}`;
+                sqlStatement = `UPDATE game SET player_green = ${player.id} WHERE id = ${player.gameId}`;
             }
 
             await sql.query(sqlStatement);

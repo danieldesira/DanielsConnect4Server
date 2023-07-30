@@ -21,6 +21,7 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     let gameId = 0;
     let color: Coin;
     let name: string = '';
+    let playerId: number = -1;
 
     try {
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
@@ -34,9 +35,10 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
                 const token = url.searchParams.get('token') ?? '';
                 const service = url.searchParams.get('service');
                 if (service === 'google') {
-                    const result = await authenticateUser(token, service);
-                    if (result) {
-                        name = result.trim().substring(0, 10);
+                    const user = await authenticateUser(token, service);
+                    if (user) {
+                        name = user.fullName.trim().substring(0, 10);
+                        playerId = user.id;
                     } else {
                         ws.close();
                     }
@@ -51,14 +53,12 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             color:  color,
             name:   name,
             ws:     ws,
-            game:   null
+            game:   null,
+            id:     playerId
         };
         Player.connectNewPlayer(newPlayer);
         await Player.updateGameId();
-
-        if (newPlayer.name) {
-            await Player.savePlayer(newPlayer);
-        }
+        await Player.savePlayer(newPlayer);
     
         console.log(`Player connected: Game Id = ${newPlayer.gameId}, Color = ${newPlayer.color}, Name = ${newPlayer.name}`);
     
@@ -84,6 +84,9 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             opponent.ws.send(JSON.stringify(currentTurnMessage));
 
             updateGameStart(gameId);
+
+            const opponentName = newPlayer.name;
+            opponent.ws.send(JSON.stringify({opponentName}));
         }
     
         ws.send(JSON.stringify(initialDataToSendNewPlayer));
