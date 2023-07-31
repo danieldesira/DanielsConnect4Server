@@ -2,6 +2,7 @@ import BoardLogic, { Coin } from '@danieldesira/daniels-connect4-common';
 import { GameStatus } from './enums/game-status';
 import { Client, QueryResultRow } from 'pg';
 import appConfig from './app-config';
+import { updateWinningPlayer } from './game-utils';
 
 export default class GameBoard {
 
@@ -42,8 +43,10 @@ export default class GameBoard {
             await sql.query(stmt);
 
             if (BoardLogic.countConsecutiveCoins(this.board, column, row, color) >= 4) {
+                await updateWinningPlayer(this.gameId, color);
                 return GameStatus.Winner;
             } else if (BoardLogic.isBoardFull(this.board)) {
+                await updateWinningPlayer(this.gameId, Coin.Empty);
                 return GameStatus.Tie;
             } else {
                 return GameStatus.InProgress;

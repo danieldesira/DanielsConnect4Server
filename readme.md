@@ -19,7 +19,8 @@ Daniel Desira
 
 ## Version History
 ### 0.2.2 (Beta - )
-* Integrate Google signon
+* Integrate Google login call
+* Set winner in database
 
 ### 0.2.1 (Beta - 18/07/2023)
 * Applied fix for adaptable.io deployment: Using the `DATABASE_URL` variable that the platform provides fixing DB/SSL error

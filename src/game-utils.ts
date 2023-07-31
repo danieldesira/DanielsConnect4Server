@@ -1,5 +1,5 @@
 import { Coin } from "@danieldesira/daniels-connect4-common";
-import { Client } from "pg";
+import { Client, Query } from "pg";
 import appConfig from "./app-config";
 import { Game } from "./game";
 
@@ -136,6 +136,35 @@ async function createNewGame(gameId: number) {
     try {
         await sql.connect();
         await sql.query(`INSERT INTO game (id) VALUES (${gameId})`);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
+}
+
+export async function updateWinningPlayer(gameId: number, color: Coin) {
+    const sql = new Client(appConfig.connectionString);
+    try {
+        await sql.connect();
+        let winner: number;
+        switch (color) {
+            case Coin.Red: {
+                const res = await sql.query(`SELECT player_red FROM game WHERE id = ${gameId}`);
+                winner = parseInt(res.rows[0].player_red);
+                break;
+            }
+            case Coin.Green: {
+                const res = await sql.query(`SELECT player_green FROM game WHERE id = ${gameId}`);
+                winner = parseInt(res.rows[0].player_green);
+                break;
+            }
+            case Coin.Empty:
+                winner = -1;
+                break;
+        }
+
+        await sql.query(`UPDATE game SET winning_player = ${winner} WHERE id = ${gameId}`);
     } catch (err) {
         console.error(err);
     } finally {
