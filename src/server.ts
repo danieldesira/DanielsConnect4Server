@@ -10,8 +10,20 @@ const http = require('http');
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
 
 // Need this HTTP server to run for Adaptable.io hosting
-const server = http.createServer((req: any, res: { end: (arg0: string) => void; }) => {
-    res.end('Daniel\'s Connect4 Server is running!');
+const server = http.createServer(async (req: any, res: { end: (arg0: string) => void; }) => {
+    const url = new URL(`https://example.com/${req.url}`);
+    if (url.searchParams.has('token') && url.searchParams.has('service')) {
+        const token = url.searchParams.get('token') ?? '';
+        const service = url.searchParams.get('service') as 'google';
+        const user = await authenticateUser(token, service);
+        if (user) {
+            res.end(JSON.stringify({
+                user: user.fullName.trim().substring(0, 10)
+            }));
+        }
+    } else {
+        res.end('Daniel\'s Connect4 Server is running!');
+    }
 }).listen(port, '0.0.0.0');
 
 const socketServer = new Server({ server });
@@ -33,15 +45,13 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
             color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
             if (url.searchParams.has('token') && url.searchParams.has('service')) {
                 const token = url.searchParams.get('token') ?? '';
-                const service = url.searchParams.get('service');
-                if (service === 'google') {
-                    const user = await authenticateUser(token, service);
-                    if (user) {
-                        name = user.fullName.trim().substring(0, 10);
-                        playerId = user.id;
-                    } else {
-                        ws.close();
-                    }
+                const service = url.searchParams.get('service') as 'google';
+                const user = await authenticateUser(token, service);
+                if (user) {
+                    name = user.fullName.trim().substring(0, 10);
+                    playerId = user.id;
+                } else {
+                    ws.close();
                 }
             } else {
                 ws.close();
