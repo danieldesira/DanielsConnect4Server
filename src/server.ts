@@ -5,26 +5,34 @@ import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
-const http = require('http');
+const express = require('express');
+const cors = require('cors');
+const http = require('node:http');
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
 
-// Need this HTTP server to run for Adaptable.io hosting
-const server = http.createServer(async (req: any, res: { end: (arg0: string) => void; }) => {
-    const url = new URL(`https://example.com/${req.url}`);
-    if (url.searchParams.has('token') && url.searchParams.has('service')) {
-        const token = url.searchParams.get('token') ?? '';
-        const service = url.searchParams.get('service') as 'google';
+const app = express();
+app.use(cors());
+const server = http.createServer(app);
+
+app.get('/', (req: any, res: any) => {
+    res.send('Daniel\'s Connect4 Server is running!');
+});
+
+app.get('/auth', async (req: any, res: any) => {
+    if (req.query.token && req.query.service) {
+        const token = req.query.token ?? '';
+        const service = req.query.service as 'google';
         const user = await authenticateUser(token, service);
         if (user) {
-            res.end(JSON.stringify({
+            res.json({
                 user: user.fullName.trim().substring(0, 10)
-            }));
+            });
         }
-    } else {
-        res.end('Daniel\'s Connect4 Server is running!');
     }
-}).listen(port, '0.0.0.0');
+});
+
+server.listen(port, '0.0.0.0');
 
 const socketServer = new Server({ server });
 socketServer.on('connection', async (ws: any, req: { url: string; }) => {
