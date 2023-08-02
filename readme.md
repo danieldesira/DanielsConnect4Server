@@ -2,14 +2,14 @@ Server for Daniel's Connect4 based on WebSockets.
 
 ## Initial Setup
 Set the following environment variables, appropriately:
-* `DATABASE_URL`: Please note that `adaptable.io` provides this by default. 
+* `DATABASE_URL`: Please note that our host `adaptable.io` provides this by default. 
 
 ## Building
-In the terminal, enter `` npm run build ``.
+In the terminal, enter `npm run build`.
 
 ## Debugging
-If you are using Visual Studio Code, always make sure terminal is in `` Javascript Debug Terminal `` mode. Otherwise, breakpoints 
-will not be hit. To start up server, enter `` npm start `` in the terminal.
+If you are using Visual Studio Code, always make sure terminal is in `Javascript Debug Terminal` mode. Otherwise, breakpoints 
+will not be hit. To start up server, enter `npm start` in the terminal.
 
 Please note that you will be required to build and restart the server before testing any code changes.
 
@@ -27,7 +27,7 @@ Daniel Desira
 
 ### 0.2 (Beta - 18/07/2023)
 * Converted code to TypeScript
-* Board is now replicated on server through `` danieldesira/daniels-connect4-common `` NPM package
+* Board is now replicated on server through `danieldesira/daniels-connect4-common` NPM package
 * Randomise initial color
 * Store game progress in a Postgres database
 * Automatically end game if a player is disconnected for at least 30 seconds

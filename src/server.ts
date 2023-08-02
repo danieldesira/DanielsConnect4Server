@@ -44,26 +44,26 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
     let playerId: number = -1;
 
     try {
-        if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
-            gameId = parseInt(url.searchParams.get('gameId') ?? '0');
-            color = parseInt(url.searchParams.get('playerColor') ?? '1');
-            name = url.searchParams.get('playerName') ?? '';
-        } else {
-            gameId = await Player.getCurrentGameId();
-            color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
-            if (url.searchParams.has('token') && url.searchParams.has('service')) {
-                const token = url.searchParams.get('token') ?? '';
-                const service = url.searchParams.get('service') as 'google';
-                const user = await authenticateUser(token, service);
-                if (user) {
-                    name = user.fullName.trim().substring(0, 10);
-                    playerId = user.id;
-                } else {
-                    ws.close();
-                }
+        if (url.searchParams.has('token') && url.searchParams.has('service')) {
+            const token = url.searchParams.get('token') ?? '';
+            const service = url.searchParams.get('service') as 'google';
+            const user = await authenticateUser(token, service);
+            if (user) {
+                name = user.fullName.trim().substring(0, 10);
+                playerId = user.id;
             } else {
                 ws.close();
             }
+        } else {
+            ws.close();
+        }
+
+        if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
+            gameId = parseInt(url.searchParams.get('gameId') ?? '0');
+            color = parseInt(url.searchParams.get('playerColor') ?? '1');
+        } else {
+            gameId = await Player.getCurrentGameId();
+            color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
         }
     
         const newPlayer: Player = {
