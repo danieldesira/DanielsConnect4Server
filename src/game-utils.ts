@@ -2,6 +2,7 @@ import { Coin } from "@danieldesira/daniels-connect4-common";
 import { Client, Query } from "pg";
 import appConfig from "./app-config";
 import { Game } from "./game";
+import PlayerStats from "./models/player-stats";
 
 export class Player {
 
@@ -170,4 +171,41 @@ export async function updateWinningPlayer(gameId: number, color: Coin) {
     } finally {
         await sql.end();
     }
+}
+
+export async function getPlayerStats(playerId: number): Promise<PlayerStats | null> {
+    const sql = new Client(appConfig.connectionString);
+    let statistics: PlayerStats | null = null;
+    try {
+        await sql.connect();
+
+        const totalRes = await sql.query(`SELECT COUNT(g.id) as count
+            FROM game g
+            WHERE g.player_red = ${playerId} OR g.player_green = ${playerId}`);
+        const total = totalRes.rows[0].count;
+
+        const winRes = await sql.query(`SELECT COUNT(g.id) as count
+            FROM game g
+            WHERE g.winning_player = 1`);
+        const wins = winRes.rows[0].count;
+
+        const lossRes = await sql.query(`SELECT COUNT(g.id) as count
+            FROM game g
+            WHERE (1 = g.player_red OR 1 = g.player_green)
+                AND 1 <> g.winning_player AND g.winning_player IS NOT NULL AND g.winning_player <> -1`);
+        const losses = lossRes.rows[0].count;
+
+        statistics = {
+            wins,
+            losses,
+            winPercent: wins / total * 100,
+            lossPercent: losses / total * 100
+        };
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
+
+    return statistics;
 }

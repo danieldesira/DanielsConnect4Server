@@ -5,6 +5,7 @@ import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
+import declareExpressRoutes from './http-routes';
 const express = require('express');
 const cors = require('cors');
 const http = require('node:http');
@@ -15,22 +16,7 @@ const app = express();
 app.use(cors());
 const server = http.createServer(app);
 
-app.get('/', (req: any, res: any) => {
-    res.send('Daniel\'s Connect4 Server is running!');
-});
-
-app.get('/auth', async (req: any, res: any) => {
-    if (req.query.token && req.query.service) {
-        const token = req.query.token ?? '';
-        const service = req.query.service as 'google';
-        const user = await authenticateUser(token, service);
-        if (user) {
-            res.json({
-                user: user.fullName.trim().substring(0, 10)
-            });
-        }
-    }
-});
+declareExpressRoutes(app);
 
 server.listen(port, '0.0.0.0');
 
