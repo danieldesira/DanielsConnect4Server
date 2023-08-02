@@ -85,6 +85,11 @@ socketServer.on('connection', async (ws: any, req: { url: string; }) => {
         // If opponent already connected, the game has started
         let opponent = Player.getOpponent(newPlayer);
         if (opponent) {
+            if (opponent.id === newPlayer.id) {
+                const message = new ErrorMessage('You cannot play on the same account!');
+                ws.send(JSON.stringify(message));
+            }
+
             initialDataToSendNewPlayer.opponentName = opponent.name;
 
             const game = new Game(gameId);
