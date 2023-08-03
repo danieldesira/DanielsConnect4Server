@@ -3,4 +3,5 @@ export interface GoogleUser {
     family_name: string;
     email: string;
     sub: string;
+    picture: string;
 }

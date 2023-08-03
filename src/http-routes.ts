@@ -13,7 +13,8 @@ export default function declareExpressRoutes(app: any) {
             const user = await authenticateUser(token, service);
             if (user) {
                 res.json({
-                    user: user.fullName.trim().substring(0, 10)
+                    user: user.fullName.trim().substring(0, 10),
+                    picUrl: user.picUrl
                 });
             }
         }
