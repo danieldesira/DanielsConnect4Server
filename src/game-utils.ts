@@ -187,13 +187,13 @@ export async function getPlayerStats(playerId: number): Promise<PlayerStats | nu
 
         const winRes = await sql.query(`SELECT COUNT(g.id) as count
             FROM game g
-            WHERE g.winning_player = 1`);
+            WHERE g.winning_player = ${playerId}`);
         const wins = winRes.rows[0].count;
 
         const lossRes = await sql.query(`SELECT COUNT(g.id) as count
             FROM game g
-            WHERE (1 = g.player_red OR 1 = g.player_green)
-                AND 1 <> g.winning_player AND g.winning_player IS NOT NULL AND g.winning_player <> -1`);
+            WHERE (g.player_red = ${playerId} OR g.player_green = ${playerId})
+                AND g.winning_player <> ${playerId} AND g.winning_player IS NOT NULL AND g.winning_player <> -1`);
         const losses = lossRes.rows[0].count;
 
         statistics = {
