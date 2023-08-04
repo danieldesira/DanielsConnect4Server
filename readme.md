@@ -4,14 +4,13 @@ Server for Daniel's Connect4 based on WebSockets.
 Set the following environment variables, appropriately:
 * `DATABASE_URL`: Please note that our host `adaptable.io` provides this by default. 
 
-## Building
+## Building for production
 In the terminal, enter `npm run build`.
 
 ## Debugging
 If you are using Visual Studio Code, always make sure terminal is in `Javascript Debug Terminal` mode. Otherwise, breakpoints 
-will not be hit. To start up server, enter `npm start` in the terminal.
-
-Please note that you will be required to build and restart the server before testing any code changes.
+will not be hit. To start up the dev server, enter `npm run dev` in the terminal. Any code changes to the TypeScript files 
+will cause the application to restart.
 
 ## Contributors
 ### Developers
@@ -19,8 +18,10 @@ Daniel Desira
 
 ## Version History
 ### 0.2.2 (Beta - )
-* Integrate Google login call
-* Set winner in database
+* User management through Google SSO
+* Set winner in database and provide win/loss statistics
+* Internal: Installed and configure and `nodemon` as a dev server
+* Internal: Configure and refactor code for improved type safety
 
 ### 0.2.1 (Beta - 18/07/2023)
 * Applied fix for adaptable.io deployment: Using the `DATABASE_URL` variable that the platform provides fixing DB/SSL error

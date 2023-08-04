@@ -2,6 +2,7 @@ import cors from "cors";
 import { authenticateUser } from "./authentication";
 import { getPlayerStats } from "./game-utils";
 import { Express } from "express";
+import { PlayerInfo } from "@danieldesira/daniels-connect4-common";
 
 export default function setupExpress(app: Express) {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io/DanielsConnect4/'];
@@ -29,7 +30,7 @@ export default function setupExpress(app: Express) {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
                     picUrl: user.picUrl
-                });
+                } as PlayerInfo);
             }
         }
     });
@@ -46,5 +47,5 @@ export default function setupExpress(app: Express) {
                 }
             }
         }
-    })
+    });
 }

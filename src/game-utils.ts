@@ -1,8 +1,8 @@
-import { Coin } from "@danieldesira/daniels-connect4-common";
-import { Client, Query } from "pg";
+import { Coin, PlayerStats } from "@danieldesira/daniels-connect4-common";
+import { Client } from "pg";
 import appConfig from "./app-config";
 import { Game } from "./game";
-import PlayerStats from "./models/player-stats";
+import { WebSocket } from "ws";
 
 export class Player {
 
@@ -10,7 +10,7 @@ export class Player {
     public color:  Coin;
     public id:     number;
     public name:   string;
-    public ws:     any;
+    public ws:     WebSocket | null;
     public game:   Game | null;
 
     public constructor() {
@@ -19,6 +19,7 @@ export class Player {
         this.name = '';
         this.game = null;
         this.id = -1;
+        this.ws = null;
     }
 
     private static currentPlayers: Set<Player> = new Set();

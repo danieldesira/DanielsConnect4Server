@@ -51,10 +51,10 @@ socketServer.on('connection', async (ws, req) => {
         }
     
         const newPlayer: Player = {
-            gameId: gameId,
-            color:  color,
-            name:   name,
-            ws:     ws,
+            gameId,
+            color,
+            name,
+            ws,
             game:   null,
             id:     playerId
         };
@@ -79,8 +79,8 @@ socketServer.on('connection', async (ws, req) => {
             const game = new Game(gameId);
             game.handleSkipTurn = () => {
                 const message = new SkipTurnMessage(true, opponent?.game?.getCurrentTurn() ?? Coin.Empty);
-                newPlayer.ws.send(JSON.stringify(message));
-                opponent?.ws.send(JSON.stringify(message));
+                newPlayer.ws?.send(JSON.stringify(message));
+                opponent?.ws?.send(JSON.stringify(message));
             };
             opponent.game = game;
             newPlayer.game = game;
@@ -88,12 +88,12 @@ socketServer.on('connection', async (ws, req) => {
             const currentTurnMessage = new CurrentTurnMessage();
             currentTurnMessage.currentTurn = game.getCurrentTurn();
             ws.send(JSON.stringify(currentTurnMessage));
-            opponent.ws.send(JSON.stringify(currentTurnMessage));
+            opponent.ws?.send(JSON.stringify(currentTurnMessage));
 
             updateGameStart(gameId);
 
             const opponentName = newPlayer.name;
-            opponent.ws.send(JSON.stringify({opponentName}));
+            opponent.ws?.send(JSON.stringify({opponentName}));
         }
     
         ws.send(JSON.stringify(initialDataToSendNewPlayer));
@@ -112,7 +112,7 @@ socketServer.on('connection', async (ws, req) => {
                     await board.load();
                     const status = await board.put(newPlayer.color, messageData.column);
                     const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
-                    opponent.ws.send(JSON.stringify(message));
+                    opponent.ws?.send(JSON.stringify(message));
 
                     if (status !== GameStatus.InProgress) {
                         let data: GameMessage;
@@ -123,15 +123,15 @@ socketServer.on('connection', async (ws, req) => {
                         } else {
                             data = new ErrorMessage('ERR001: Error happened during game save. Please file a bug.');
                         }
-                        newPlayer.ws.send(JSON.stringify(data));
-                        opponent.ws.send(JSON.stringify(data));
+                        newPlayer.ws?.send(JSON.stringify(data));
+                        opponent.ws?.send(JSON.stringify(data));
                         await updateGameFinish(gameId);
                     }
                 }
     
                 if (messageData.action === 'mousemove' && GameMessage.isActionMessage(messageData)) {
                     const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
-                    opponent.ws.send(JSON.stringify(message));
+                    opponent.ws?.send(JSON.stringify(message));
                 }
             }
             
@@ -150,7 +150,7 @@ socketServer.on('connection', async (ws, req) => {
                         if (!opponent) {
                             opponent = Player.getOpponent(newPlayer);
                         }
-                        opponent?.ws.send(JSON.stringify(new DisconnectMessage()));
+                        opponent?.ws?.send(JSON.stringify(new DisconnectMessage()));
                         await updateGameFinish(gameId);
                     }
                 } else {
