@@ -1,27 +1,25 @@
-const { Server } = require('ws');
+import { Server } from 'ws';
 import GameBoard from './game-board';
 import { Player, updateGameFinish, updateGameStart } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
-import declareExpressRoutes from './http-routes';
-const express = require('express');
-const cors = require('cors');
-const http = require('node:http');
+import express from 'express';
+import http from 'node:http';
+import setupExpress from './http-routes';
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
 
 const app = express();
-app.use(cors());
 const server = http.createServer(app);
 
-declareExpressRoutes(app);
+setupExpress(app);
 
 server.listen(port, '0.0.0.0');
 
 const socketServer = new Server({ server });
-socketServer.on('connection', async (ws: any, req: { url: string; }) => {
+socketServer.on('connection', async (ws, req) => {
     const url = new URL(`wss://example.com${req.url}`);
 
     let gameId = 0;
