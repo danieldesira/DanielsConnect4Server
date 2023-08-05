@@ -17,11 +17,12 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
-### 0.2.2 (Beta - )
-* User management through Google SSO
+### 0.2.2 (Beta - 05/08/2023)
+* User management through Google SSO token
 * Set winner in database and provide win/loss statistics
 * Internal: Installed and configure and `nodemon` as a dev server
 * Internal: Configure and refactor code for improved type safety
+* Internal: Install Express and configure CORS policy
 
 ### 0.2.1 (Beta - 18/07/2023)
 * Applied fix for adaptable.io deployment: Using the `DATABASE_URL` variable that the platform provides fixing DB/SSL error
