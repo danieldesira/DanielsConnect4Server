@@ -5,7 +5,7 @@ import { Express } from "express";
 import { PlayerInfo } from "@danieldesira/daniels-connect4-common";
 
 export default function setupExpress(app: Express) {
-    const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io/DanielsConnect4/'];
+    const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
 
     app.use(cors({
         origin: (origin, callback) => {

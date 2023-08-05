@@ -170,5 +170,5 @@ socketServer.on('connection', async (ws, req) => {
     }
 });
 
-console.log('Daniel\'s Connect4 Server 0.2.2 (Beta) running...');
+console.log('Daniel\'s Connect4 Server 0.2.3 (Beta) running...');
 console.log(`Listening on port: ${port}`);
