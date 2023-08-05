@@ -1,6 +1,6 @@
 import { Server } from 'ws';
 import GameBoard from './game-board';
-import { Player, updateGameFinish, updateGameStart } from './game-utils';
+import { Player, updateGameFinish, updateGameStart, updateWinningPlayer } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
@@ -152,6 +152,9 @@ socketServer.on('connection', async (ws, req) => {
                         }
                         opponent?.ws?.send(JSON.stringify(new DisconnectMessage()));
                         await updateGameFinish(gameId);
+                        if (opponent) {
+                            await updateWinningPlayer(opponent.gameId, opponent.color);
+                        }
                     }
                 } else {
                     clearInterval(interval);
