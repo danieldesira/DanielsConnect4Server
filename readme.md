@@ -17,6 +17,9 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
+### 0.2.3 (Beta - 05/08/2023)
+* Fix CORS origins for deployment
+
 ### 0.2.2 (Beta - 05/08/2023)
 * User management through Google SSO token
 * Set winner in database and provide win/loss statistics
