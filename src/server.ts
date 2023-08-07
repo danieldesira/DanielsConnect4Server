@@ -36,10 +36,12 @@ socketServer.on('connection', async (ws, req) => {
                 name = user.fullName.trim().substring(0, 10);
                 playerId = user.id;
             } else {
-                ws.close();
+                const error = new ErrorMessage('Unable to authenticate user! Please logout and login again.');
+                ws.send(JSON.stringify(error));
             }
         } else {
-            ws.close();
+            const error = new ErrorMessage('Unable to authenticate user! Please logout and login again.');
+            ws.send(JSON.stringify(error));
         }
 
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
@@ -170,5 +172,5 @@ socketServer.on('connection', async (ws, req) => {
     }
 });
 
-console.log('Daniel\'s Connect4 Server 0.2.3 (Beta) running...');
+console.log('Daniel\'s Connect4 Server 0.2.4 (Beta) running...');
 console.log(`Listening on port: ${port}`);

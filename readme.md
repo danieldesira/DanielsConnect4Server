@@ -17,6 +17,9 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
+### 0.2.4 (Beta - )
+* Sending error message when Google token has expired
+
 ### 0.2.3 (Beta - 05/08/2023)
 * Fix CORS origins for deployment
 

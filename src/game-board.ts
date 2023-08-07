@@ -1,4 +1,4 @@
-import BoardLogic, { Coin } from '@danieldesira/daniels-connect4-common';
+import BoardLogic, { Coin, dimensions } from '@danieldesira/daniels-connect4-common';
 import { GameStatus } from './enums/game-status';
 import { Client, QueryResultRow } from 'pg';
 import appConfig from './app-config';
@@ -6,12 +6,12 @@ import { updateWinningPlayer } from './game-utils';
 
 export default class GameBoard {
 
-    private board: Array<Array<Coin>> = new Array(BoardLogic.columns);
+    private board: BoardLogic;
     private gameId: number;
 
     public constructor(gameId: number) {
         this.gameId = gameId;
-        BoardLogic.initBoard(this.board);
+        this.board = new BoardLogic(dimensions.large.columns, dimensions.large.rows);
     }
 
     public getGameId = () => this.gameId;
@@ -37,15 +37,15 @@ export default class GameBoard {
         try {
             await sql.connect();
             
-            const row = BoardLogic.putCoin(this.board, color, column);
+            const row = this.board.putCoin(color, column);
             const stmt = `INSERT INTO Move (col, row, color, game_id, timestamp)
                         VALUES (${column}, ${row}, ${color}, ${this.gameId}, current_timestamp)`;
             await sql.query(stmt);
 
-            if (BoardLogic.countConsecutiveCoins(this.board, column, row, color) >= 4) {
+            if (this.board.countConsecutiveCoins(column, row, color) >= 4) {
                 await updateWinningPlayer(this.gameId, color);
                 return GameStatus.Winner;
-            } else if (BoardLogic.isBoardFull(this.board)) {
+            } else if (this.board.isBoardFull()) {
                 await updateWinningPlayer(this.gameId, Coin.Empty);
                 return GameStatus.Tie;
             } else {
@@ -59,8 +59,8 @@ export default class GameBoard {
     }
 
     private readMatrix(boardEntries: QueryResultRow[]) {
-        for (const item of boardEntries) {
-            this.board[item.col][item.row] = item.color;
+        for (const move of boardEntries) {
+            this.board.setBoardItem(move.color, move.col, move.row);
         }
     }
 
