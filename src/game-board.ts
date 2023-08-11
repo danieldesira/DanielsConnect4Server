@@ -1,4 +1,4 @@
-import BoardLogic, { Coin, dimensions } from '@danieldesira/daniels-connect4-common';
+import BoardLogic, { BoardDimensions, Coin, dimensions } from '@danieldesira/daniels-connect4-common';
 import { GameStatus } from './enums/game-status';
 import { Client, QueryResultRow } from 'pg';
 import appConfig from './app-config';
@@ -11,7 +11,7 @@ export default class GameBoard {
 
     public constructor(gameId: number) {
         this.gameId = gameId;
-        this.board = new BoardLogic(dimensions.large.columns, dimensions.large.rows);
+        this.board = new BoardLogic(BoardDimensions.Large);
     }
 
     public getGameId = () => this.gameId;

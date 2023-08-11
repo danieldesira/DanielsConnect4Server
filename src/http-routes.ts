@@ -29,7 +29,8 @@ export default function setupExpress(app: Express) {
             if (user) {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
-                    picUrl: user.picUrl
+                    picUrl: user.picUrl,
+                    dimensions: user.dimensions
                 } as PlayerInfo);
             }
         }

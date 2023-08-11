@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@danieldesira/daniels-connect4-common": "^0.1.24",
+    "@danieldesira/daniels-connect4-common": "^0.1.25",
     "axios": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.1.4",
