@@ -5,16 +5,12 @@ import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
-import express from 'express';
 import http from 'node:http';
 import setupExpress from './http-routes';
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
-
-const app = express();
+const app = setupExpress();
 const server = http.createServer(app);
-
-setupExpress(app);
 
 server.listen(port, '0.0.0.0');
 

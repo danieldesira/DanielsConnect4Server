@@ -1,4 +1,4 @@
-import { Coin, PlayerStats } from "@danieldesira/daniels-connect4-common";
+import { BoardDimensions, Coin, PlayerStats } from "@danieldesira/daniels-connect4-common";
 import { Client } from "pg";
 import appConfig from "./app-config";
 import { Game } from "./game";
@@ -209,4 +209,16 @@ export async function getPlayerStats(playerId: number): Promise<PlayerStats | nu
     }
 
     return statistics;
+}
+
+export async function updatePlayerDimensions(userId: number, dimensions: BoardDimensions) {
+    const sql = new Client(appConfig.connectionString);
+    try {
+        await sql.connect();
+        await sql.query(`UPDATE player SET board_dimensions = ${dimensions} WHERE id = ${userId}`);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
 }
