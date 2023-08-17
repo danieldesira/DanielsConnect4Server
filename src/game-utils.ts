@@ -78,22 +78,10 @@ export class Player {
     }
 
     public static async savePlayer(player: Player) {
-        const sql = new Client(appConfig.connectionString);
-        try {
-            await sql.connect();
-            let sqlStatement: string;
-            
-            if (player.color === Coin.Red) {
-                sqlStatement = `UPDATE game SET player_red = ${player.id} WHERE id = ${player.gameId}`;
-            } else {
-                sqlStatement = `UPDATE game SET player_green = ${player.id} WHERE id = ${player.gameId}`;
-            }
-
-            await sql.query(sqlStatement);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            await sql.end();
+        if (player.color === Coin.Red) {
+            await updateDbValue('game', player.gameId, 'player_red', player.id.toString());
+        } else {
+            await updateDbValue('game', player.gameId, 'player_green', player.id.toString());
         }
     }
 
@@ -110,27 +98,11 @@ export class Player {
 }
 
 export async function updateGameStart(gameId: number) {
-    const sql = new Client(appConfig.connectionString);
-    try {
-        await sql.connect();
-        await sql.query(`UPDATE game SET start = current_timestamp WHERE id = ${gameId}`);
-    } catch (err) {
-        console.error(err);
-    } finally {
-        await sql.end();
-    }
+    await updateDbValue('game', gameId, 'start', 'current_timestamp');
 }
 
 export async function updateGameFinish(gameId: number) {
-    const sql = new Client(appConfig.connectionString);
-    try {
-        await sql.connect();
-        await sql.query(`UPDATE game SET finish = current_timestamp WHERE id = ${gameId}`);
-    } catch (err) {
-        console.error(err);
-    } finally {
-        await sql.end();
-    }
+    await updateDbValue('game', gameId, 'finish', 'current_timestamp');
 }
 
 async function createNewGame(gameId: number) {
@@ -212,10 +184,14 @@ export async function getPlayerStats(playerId: number): Promise<PlayerStats | nu
 }
 
 export async function updatePlayerDimensions(userId: number, dimensions: BoardDimensions) {
+    await updateDbValue('player', userId, 'board_dimensions', dimensions.toString());
+}
+
+async function updateDbValue(table: string, id: number, field: string, value: string) {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
-        await sql.query(`UPDATE player SET board_dimensions = ${dimensions} WHERE id = ${userId}`);
+        await sql.query(`UPDATE ${table} SET ${field} = ${value} WHERE id = ${id}`);
     } catch (err) {
         console.error(err);
     } finally {
