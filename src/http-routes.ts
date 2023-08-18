@@ -20,7 +20,7 @@ export default function setupExpress() {
     }));
     app.use(bodyParser.json());
 
-    app.get('/', (req, res) => {
+    app.get('/', (_req, res) => {
         res.send('Daniel\'s Connect4 Server is running!');
     });
     
