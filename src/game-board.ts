@@ -17,9 +17,17 @@ export default class GameBoard {
     public getGameId = () => this.gameId;
 
     public async load() {
-        const dimensions = await this.getGameDimensions();
-        this.board = new BoardLogic(dimensions);
-        await this.loadMatrix();
+        const sql = new Client(appConfig.connectionString);
+        try {
+            await sql.connect();
+            const dimensions = await this.getGameDimensions(sql);
+            this.board = new BoardLogic(dimensions);
+            await this.loadMatrix(sql);
+        } catch (error) {
+            console.error(`Something went wrong for game ${this.gameId} while loading matrix: ${error}`);
+        } finally {
+            await sql.end();
+        }
     }
 
     public async put(color: Coin, column: number): Promise<GameStatus | undefined> {
@@ -48,37 +56,20 @@ export default class GameBoard {
         }
     }
 
-    private async loadMatrix() {
-        const sql = new Client(appConfig.connectionString);
-        try {
-            await sql.connect();
-            const result = await sql.query(`SELECT col, row, color FROM Move WHERE game_id = ${this.gameId}`);
-            if (result.rowCount > 0) {
-                for (const move of result.rows) {
-                    this.board.setBoardItem(move.color, move.col, move.row);
-                }
-            }
-        } catch (error) {
-            console.error(`Something went wrong for game ${this.gameId} while loading matrix: ${error}`);
-        } finally {
-            await sql.end();
+    private async loadMatrix(sql: Client) {
+        const result = await sql.query(`SELECT col, row, color FROM Move WHERE game_id = ${this.gameId}`);
+        for (const move of result.rows) {
+            this.board.setBoardItem(move.color, move.col, move.row);
         }
     }
 
-    private async getGameDimensions(): Promise<BoardDimensions> {
-        const sql = new Client(appConfig.connectionString);
+    private async getGameDimensions(sql: Client): Promise<BoardDimensions> {
         let dimensions: BoardDimensions = BoardDimensions.Large;
-        try {
-            await sql.connect();
-            const result = await sql.query(`SELECT board_dimensions FROM game WHERE id = ${this.gameId}`);
-            if (result.rowCount > 0) {
-                dimensions = result.rows[0].board_dimensions as BoardDimensions;
-            }
-        } catch (error) {
-            console.error(`Something went wrong for game ${this.gameId} while loading game dimensions: ${error}`);
-        } finally {
-            await sql.end();
+        const result = await sql.query(`SELECT board_dimensions FROM game WHERE id = ${this.gameId}`);
+        if (result.rowCount > 0) {
+            dimensions = result.rows[0].board_dimensions as BoardDimensions;
         }
+        
         return dimensions;
     }
 

@@ -6,21 +6,32 @@ import { WebSocket } from "ws";
 
 export class Player {
 
-    public gameId: number;
-    public color:  Coin;
-    public id:     number;
-    public name:   string;
-    public ws:     WebSocket | null;
-    public game:   Game | null;
+    private gameId: number;
+    private color:  Coin;
+    private id:     number;
+    private name:   string;
+    private ws:     WebSocket;
+    private game:   Game | null;
 
-    public constructor() {
-        this.gameId = -1;
-        this.color = Coin.Red;
-        this.name = '';
+    public constructor(gameId: number, color: Coin, id: number, name: string, ws: WebSocket) {
+        this.gameId = gameId;
+        this.color = color;
+        this.name = name;
         this.game = null;
-        this.id = -1;
-        this.ws = null;
+        this.id = id;
+        this.ws = ws;
     }
+
+    public setGame(game: Game) {
+        this.game = game;
+    }
+
+    public getWs = () => this.ws;
+    public getGame = () => this.game;
+    public getGameId = () => this.gameId;
+    public getColor = () => this.color;
+    public getName = () => this.name;
+    public getId = () => this.id;
 
     private static currentPlayers: Set<Player> = new Set();
     private static currentGameId: number = 0;
