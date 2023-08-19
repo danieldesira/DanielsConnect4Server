@@ -33,6 +33,23 @@ export class Player {
     public getName = () => this.name;
     public getId = () => this.id;
 
+    public async getDimensions(): Promise<BoardDimensions> {
+        const sql = new Client(appConfig.connectionString);
+        let dimensions = BoardDimensions.Large;
+        try {
+            await sql.connect();
+            const res = await sql.query(`SELECT board_dimensions FROM player WHERE id = ${this.id}`);
+            if (res.rowCount > 0) {
+                dimensions = res.rows[0].board_dimensions as BoardDimensions;
+            }
+        } catch (err) {
+            console.error(`Failed to fetch current game ID ${err}`);
+        } finally {
+            await sql.end();
+        }
+        return dimensions;
+    }
+
     private static currentPlayers: Set<Player> = new Set();
     private static currentGameId: number = 0;
 
@@ -88,15 +105,15 @@ export class Player {
         return Player.currentGameId;
     }
 
-    public static async savePlayer(player: Player) {
-        if (player.color === Coin.Red) {
-            await updateDbValue('game', player.gameId, 'player_red', player.id.toString());
+    public async save() {
+        if (this.color === Coin.Red) {
+            await updateDbValue('game', this.gameId, 'player_red', this.id.toString());
         } else {
-            await updateDbValue('game', player.gameId, 'player_green', player.id.toString());
+            await updateDbValue('game', this.gameId, 'player_green', this.id.toString());
         }
     }
 
-    public static isPlayerConnected(player: Player) : boolean {
+    public static isPlayerConnected(player: Player): boolean {
         let found: boolean = false;
         Player.currentPlayers.forEach((p) => {
             if (p.gameId === player.gameId && p.color === player.color) {

@@ -51,9 +51,9 @@ socketServer.on('connection', async (ws, req) => {
         const newPlayer = new Player(gameId, color, playerId, name, ws);
         Player.connectNewPlayer(newPlayer);
         await Player.updateGameId();
-        await Player.savePlayer(newPlayer);
+        await newPlayer.save();
     
-        console.log(`Player connected: Game Id = ${newPlayer.getGameId()}, Color = ${newPlayer.getColor()}, Name = ${newPlayer.getName()}`);
+        console.log(`Player connected: Game Id = ${newPlayer.getGameId()}, Color = ${newPlayer.getColor()}, Name = ${newPlayer.getName()}, Dimensions = ${(await newPlayer.getDimensions())}`);
     
         const initialDataToSendNewPlayer = new InitialMessage(newPlayer.getGameId(), newPlayer.getName(), '', newPlayer.getColor());
     
