@@ -21,11 +21,11 @@ async function handleGoogleToken(token: string): Promise<AuthenticatedUser | nul
         const user = response.data as GoogleUser;
         const authenticatedUserModel: AuthenticatedUser = {
             id: -1,
-            fullName: `${user.given_name} ${user.family_name}`,
+            fullName: `${user.given_name ?? ''} ${user.family_name ?? ''}`.trim(),
             picUrl: user.picture,
             dimensions: BoardDimensions.Large
         };
-        const {id, dimensions} = await createUser(user.given_name, user.family_name, user.email, user.sub, 'google');
+        const {id, dimensions} = await createUser(user.given_name ?? null, user.family_name ?? null, user.email, user.sub, 'google');
         authenticatedUserModel.id = id;
         authenticatedUserModel.dimensions = dimensions;
         return authenticatedUserModel;
@@ -43,7 +43,7 @@ async function createUser(name: string, surname: string, email: string, external
         const queryResult = await sql.query(`SELECT id, board_dimensions FROM player WHERE external_id = '${externalId}' AND service = '${service}'`);
         if (queryResult.rowCount === 0) {
             const inserted = await sql.query(`INSERT INTO player (name, surname, email, external_id, service, board_dimensions)
-                    VALUES ('${name}', '${surname}', '${email}', '${externalId}', '${service}', ${BoardDimensions.Large})
+                    VALUES (${name ? `'${name}'` : 'NULL'}, ${surname ? `'${surname}'` : 'NULL'}, '${email}', '${externalId}', '${service}', ${BoardDimensions.Large})
                     RETURNING id, board_dimensions`);
             id = inserted.rows[0].id as number;
             dimensions = inserted.rows[0].board_dimensions as BoardDimensions;

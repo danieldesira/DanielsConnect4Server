@@ -21,6 +21,7 @@ Daniel Desira
 * Sending error message when Google token has expired
 * Adapt to multiple dimensions
 * Internal: Code cleanup
+* Google signon: Clear undefined names/surnames
 
 ### 0.2.3 (Beta - 05/08/2023)
 * Fix CORS origins for deployment

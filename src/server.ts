@@ -1,12 +1,13 @@
 import { Server } from 'ws';
 import GameBoard from './game-board';
-import { Player, updateGameFinish, updateGameStart, updateWinningPlayer } from './game-utils';
+import { updateGameFinish, updateGameStart, updateWinningPlayer } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
 import http from 'node:http';
 import setupExpress from './http-routes';
+import Player from './player';
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
 const app = setupExpress();
