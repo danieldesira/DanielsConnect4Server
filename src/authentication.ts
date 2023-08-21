@@ -23,7 +23,8 @@ async function handleGoogleToken(token: string): Promise<AuthenticatedUser | nul
             id: -1,
             fullName: `${user.given_name ?? ''} ${user.family_name ?? ''}`.trim(),
             picUrl: user.picture,
-            dimensions: BoardDimensions.Large
+            dimensions: BoardDimensions.Large,
+            isTokenValid: !!user.email
         };
         const {id, dimensions} = await createUser(user.given_name ?? null, user.family_name ?? null, user.email, user.sub, 'google');
         authenticatedUserModel.id = id;

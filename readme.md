@@ -22,6 +22,7 @@ Daniel Desira
 * Adapt to multiple dimensions
 * Internal: Code cleanup
 * Google signon: Clear undefined names/surnames
+* Google signon: Returns if `isTokenValid` flag in response
 
 ### 0.2.3 (Beta - 05/08/2023)
 * Fix CORS origins for deployment

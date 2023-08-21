@@ -33,7 +33,8 @@ export default function setupExpress() {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
                     picUrl: user.picUrl,
-                    dimensions: user.dimensions
+                    dimensions: user.dimensions,
+                    isTokenValid: user.isTokenValid
                 } as PlayerInfo);
             } else {
                 res.json({message: 'Unauthenticated'});
