@@ -8,16 +8,16 @@ import bodyParser from "body-parser";
 export default function setupExpress() {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
     const app = express();
-
-    app.use(cors({
-        origin: (origin, callback) => {
-            if (allowedOrigins.indexOf(origin ?? '') !== -1) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS policy!'));
-            }
-        }
-    }));
+app.use(cors());
+    // app.use(cors({
+    //     origin: (origin, callback) => {
+    //         if (allowedOrigins.indexOf(origin ?? '') !== -1) {
+    //             callback(null, true);
+    //         } else {
+    //             callback(new Error('Not allowed by CORS policy!'));
+    //         }
+    //     }
+    // }));
     app.use(bodyParser.json());
 
     app.get('/', (_req, res) => {
@@ -33,10 +33,10 @@ export default function setupExpress() {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
                     picUrl: user.picUrl,
-                    dimensions: user.dimensions,
-                    isTokenValid: user.isTokenValid
+                    dimensions: user.dimensions
                 } as PlayerInfo);
             } else {
+                res.status(401);
                 res.json({message: 'Unauthenticated'});
             }
         }
@@ -53,6 +53,7 @@ export default function setupExpress() {
                     res.json(statistics);
                 }
             } else {
+                res.status(401);
                 res.json({message: 'Unauthenticated'});
             }
         }
@@ -68,6 +69,7 @@ export default function setupExpress() {
                 await updatePlayerDimensions(user.id, dimensions);
                 res.json({message: 'ok'});
             } else {
+                res.status(401);
                 res.json({message: 'Unauthenticated'});
             }
         }

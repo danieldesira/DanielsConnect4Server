@@ -19,23 +19,23 @@ async function handleGoogleToken(token: string): Promise<AuthenticatedUser | nul
     try {
         const response = await axios.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token}`);
         const user = response.data as GoogleUser;
-        const authenticatedUserModel: AuthenticatedUser = {
-            id: -1,
-            fullName: `${user.given_name ?? ''} ${user.family_name ?? ''}`.trim(),
-            picUrl: user.picture,
-            dimensions: BoardDimensions.Large,
-            isTokenValid: !!user.email
-        };
-        const {id, dimensions} = await createUser(user.given_name ?? null, user.family_name ?? null, user.email, user.sub, 'google');
-        authenticatedUserModel.id = id;
-        authenticatedUserModel.dimensions = dimensions;
+        let authenticatedUserModel: AuthenticatedUser | null = null;
+        if (!!user.email) {
+            const {id, dimensions} = await getDBUser(user.given_name ?? null, user.family_name ?? null, user.email, user.sub, 'google');
+            authenticatedUserModel = {
+                id,
+                fullName: `${user.given_name ?? ''} ${user.family_name ?? ''}`.trim(),
+                picUrl: user.picture,
+                dimensions
+            };
+        }
         return authenticatedUserModel;
     } catch {
         return null;
     }
 }
 
-async function createUser(name: string, surname: string, email: string, externalId: string, service: 'google'): Promise<UserDBModel> {
+async function getDBUser(name: string, surname: string, email: string, externalId: string, service: 'google'): Promise<UserDBModel> {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
