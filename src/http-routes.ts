@@ -4,20 +4,21 @@ import { getPlayerStats, updatePlayerDimensions } from "./game-utils";
 import express from "express";
 import { PlayerInfo } from "@danieldesira/daniels-connect4-common";
 import bodyParser from "body-parser";
+import Player from "./player";
 
 export default function setupExpress() {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
     const app = express();
 app.use(cors());
-    // app.use(cors({
-    //     origin: (origin, callback) => {
-    //         if (allowedOrigins.indexOf(origin ?? '') !== -1) {
-    //             callback(null, true);
-    //         } else {
-    //             callback(new Error('Not allowed by CORS policy!'));
-    //         }
-    //     }
-    // }));
+    app.use(cors({
+        origin: (origin, callback) => {
+            if (allowedOrigins.indexOf(origin ?? '') !== -1) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS policy!'));
+            }
+        }
+    }));
     app.use(bodyParser.json());
 
     app.get('/', (_req, res) => {
@@ -32,8 +33,7 @@ app.use(cors());
             if (user) {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
-                    picUrl: user.picUrl,
-                    dimensions: user.dimensions
+                    picUrl: user.picUrl
                 } as PlayerInfo);
             } else {
                 res.status(401);
@@ -51,6 +51,23 @@ app.use(cors());
                 const statistics = await getPlayerStats(user.id);
                 if (statistics) {
                     res.json(statistics);
+                }
+            } else {
+                res.status(401);
+                res.json({message: 'Unauthenticated'});
+            }
+        }
+    });
+
+    app.get('/settings', async (req, res) => {
+        if (req.query.token && req.query.service) {
+            const token = (req.query.token ?? '') as string;
+            const service = req.query.service as 'google';
+            const user = await authenticateUser(token, service);
+            if (user) {
+                const settings = await Player.getSettings(user.id);
+                if (settings) {
+                    res.json(settings);
                 }
             } else {
                 res.status(401);

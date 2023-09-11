@@ -21,12 +21,11 @@ async function handleGoogleToken(token: string): Promise<AuthenticatedUser | nul
         const user = response.data as GoogleUser;
         let authenticatedUserModel: AuthenticatedUser | null = null;
         if (!!user.email) {
-            const {id, dimensions} = await getDBUser(user.given_name ?? null, user.family_name ?? null, user.email, user.sub, 'google');
+            const {id} = await getDBUser(user.given_name ?? null, user.family_name ?? null, user.email, user.sub, 'google');
             authenticatedUserModel = {
                 id,
                 fullName: `${user.given_name ?? ''} ${user.family_name ?? ''}`.trim(),
-                picUrl: user.picture,
-                dimensions
+                picUrl: user.picture
             };
         }
         return authenticatedUserModel;
@@ -40,21 +39,17 @@ async function getDBUser(name: string, surname: string, email: string, externalI
     try {
         await sql.connect();
         let id: number;
-        let dimensions: BoardDimensions;
         const queryResult = await sql.query(`SELECT id, board_dimensions FROM player WHERE external_id = '${externalId}' AND service = '${service}'`);
         if (queryResult.rowCount === 0) {
             const inserted = await sql.query(`INSERT INTO player (name, surname, email, external_id, service, board_dimensions)
                     VALUES (${name ? `'${name}'` : 'NULL'}, ${surname ? `'${surname}'` : 'NULL'}, '${email}', '${externalId}', '${service}', ${BoardDimensions.Large})
                     RETURNING id, board_dimensions`);
             id = inserted.rows[0].id as number;
-            dimensions = inserted.rows[0].board_dimensions as BoardDimensions;
         } else {
             id = queryResult.rows[0].id as number;
-            dimensions = queryResult.rows[0].board_dimensions as BoardDimensions;
         }
         return {
-            id,
-            dimensions
+            id
         };
     } catch (err) {
         console.error(`Error creating\\checking user: ${err}`);

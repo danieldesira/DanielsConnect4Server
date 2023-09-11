@@ -1,4 +1,4 @@
-import { BoardDimensions, Coin } from "@danieldesira/daniels-connect4-common";
+import { BoardDimensions, Coin, PlayerSettings } from "@danieldesira/daniels-connect4-common";
 import { Game } from "./game";
 import { WebSocket } from "ws";
 import appConfig from "./app-config";
@@ -122,6 +122,25 @@ export default class Player {
             }
         });
         return found;
+    }
+
+    public static async getSettings(playerId: number): Promise<PlayerSettings> {
+        const sql = new Client(appConfig.connectionString);
+        let dimensions = BoardDimensions.Large;
+        try {
+            await sql.connect();
+            const res = await sql.query(`SELECT board_dimensions FROM player WHERE id = ${[playerId]}`);
+            if (res.rowCount > 0) {
+                dimensions = res.rows[0].board_dimensions as BoardDimensions;
+            }
+        } catch (err) {
+            console.error(`Failed to fetch current game ID ${err}`);
+        } finally {
+            await sql.end();
+        }
+        return {
+            dimensions
+        };
     }
 
 }
