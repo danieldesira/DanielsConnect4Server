@@ -20,7 +20,6 @@ socketServer.on('connection', async (ws, req) => {
     const url = new URL(`wss://example.com${req.url}`);
 
     let gameId = 0;
-    let color: Coin;
     let name: string = '';
     let playerId: number = -1;
 
@@ -41,20 +40,23 @@ socketServer.on('connection', async (ws, req) => {
             ws.send(JSON.stringify(error));
         }
 
+        let newPlayer: Player;
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
             gameId = parseInt(url.searchParams.get('gameId') ?? '0');
-            color = parseInt(url.searchParams.get('playerColor') ?? '1');
+            const color = parseInt(url.searchParams.get('playerColor') ?? '1');
+            newPlayer = new Player(playerId, name, ws, gameId, color);
         } else {
-            gameId = await Player.getCurrentGameId();
-            color = (Player.getPlayerCountForCurrentGameId() === 0 ? Coin.Red : Coin.Green);
+            newPlayer = await Player.attemptNewPlayerPairing(playerId, name, ws);
         }
-    
-        const newPlayer = new Player(gameId, color, playerId, name, ws);
+
         Player.connectNewPlayer(newPlayer);
         await Player.updateGameId();
         await newPlayer.save();
     
-        console.log(`Player connected: Game Id = ${newPlayer.getGameId()}, Color = ${newPlayer.getColor()}, Name = ${newPlayer.getName()}, Dimensions = ${(await newPlayer.getDimensions())}`);
+        console.log(`Player connected: Game Id = ${newPlayer.getGameId()},
+                    Color = ${newPlayer.getColor()},
+                    Name = ${newPlayer.getName()},
+                    Dimensions = ${(await newPlayer.getDimensions())}`);
     
         const initialDataToSendNewPlayer = new InitialMessage(newPlayer.getGameId(), newPlayer.getName(), '', newPlayer.getColor());
     
@@ -131,7 +133,9 @@ socketServer.on('connection', async (ws, req) => {
     
         ws.on('close', () => {
             Player.removePlayer(newPlayer);
-            console.log(`Player disconnected: Game Id = ${newPlayer.getGameId()}, Color = ${newPlayer.getColor()}, Name = ${newPlayer.getName()}`);
+            console.log(`Player disconnected: Game Id = ${newPlayer.getGameId()},
+                        Color = ${newPlayer.getColor()},
+                        Name = ${newPlayer.getName()}`);
 
             let disconnectCountdown: number = 30;
             const interval: NodeJS.Timer = setInterval(async () => {

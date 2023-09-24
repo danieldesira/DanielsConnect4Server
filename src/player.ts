@@ -7,20 +7,24 @@ import { createNewGame, updateDbValue } from "./game-utils";
 
 export default class Player {
 
-    private gameId: number;
-    private color:  Coin;
-    private id:     number;
-    private name:   string;
-    private ws:     WebSocket;
-    private game:   Game | null;
+    private gameId:     number;
+    private color:      Coin;
+    private id:         number;
+    private name:       string;
+    private ws:         WebSocket;
+    private game:       Game | null;
+    private dimensions: BoardDimensions | null;
+    private isPaired:   boolean;
 
-    public constructor(gameId: number, color: Coin, id: number, name: string, ws: WebSocket) {
+    public constructor(id: number, name: string, ws: WebSocket, gameId: number = -1, color: Coin = Coin.Empty) {
         this.gameId = gameId;
         this.color = color;
         this.name = name;
         this.game = null;
         this.id = id;
         this.ws = ws;
+        this.dimensions = null;
+        this.isPaired = false;
     }
 
     public setGame(game: Game) {
@@ -35,20 +39,46 @@ export default class Player {
     public getId = () => this.id;
 
     public async getDimensions(): Promise<BoardDimensions> {
-        const sql = new Client(appConfig.connectionString);
-        let dimensions = BoardDimensions.Large;
-        try {
-            await sql.connect();
-            const res = await sql.query(`SELECT board_dimensions FROM player WHERE id = ${this.id}`);
-            if (res.rowCount > 0) {
-                dimensions = res.rows[0].board_dimensions as BoardDimensions;
+        if (!this.dimensions) {
+            const sql = new Client(appConfig.connectionString);
+            try {
+                await sql.connect();
+                const res = await sql.query(`SELECT board_dimensions FROM player WHERE id = ${this.id}`);
+                if (res.rowCount > 0) {
+                    this.dimensions = res.rows[0].board_dimensions as BoardDimensions;
+                }
+            } catch (err) {
+                console.error(`Failed to fetch current game ID ${err}`);
+            } finally {
+                await sql.end();
             }
-        } catch (err) {
-            console.error(`Failed to fetch current game ID ${err}`);
-        } finally {
-            await sql.end();
         }
-        return dimensions;
+        return this.dimensions as BoardDimensions;
+    }
+
+    public static async attemptNewPlayerPairing(id: number, name: string, ws: WebSocket): Promise<Player> {
+        const newPlayer = new Player(id, name, ws);
+
+        for (const player of Array.from(this.currentPlayers)) {
+            if (!player.isPaired) {
+                const newPlayerDimensions = await newPlayer.getDimensions();
+                const currentDimensions = await player.getDimensions();
+                if (newPlayerDimensions === currentDimensions) {
+                    newPlayer.isPaired = true;
+                    player.isPaired = true;
+                    newPlayer.gameId = player.gameId;
+                    newPlayer.color = Coin.Green;
+                    break;
+                }
+            }
+        }
+
+        if (!newPlayer.isPaired) {
+            newPlayer.color = Coin.Red;
+            newPlayer.gameId = await this.getCurrentGameId();
+        }
+
+        return newPlayer;
     }
 
     private static currentPlayers: Set<Player> = new Set();
