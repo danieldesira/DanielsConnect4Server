@@ -10,11 +10,11 @@ export async function updateGameFinish(gameId: number) {
     await updateDbValue('game', gameId, 'finish', 'current_timestamp');
 }
 
-export async function createNewGame(gameId: number) {
+export async function createNewGame(gameId: number, dimensions: BoardDimensions) {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
-        await sql.query(`INSERT INTO game (id) VALUES (${gameId})`);
+        await sql.query(`INSERT INTO game (id, dimensions) VALUES (${gameId}, ${dimensions})`);
     } catch (err) {
         console.error(err);
     } finally {

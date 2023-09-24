@@ -76,6 +76,10 @@ export default class Player {
         if (!newPlayer.isPaired) {
             newPlayer.color = Coin.Red;
             newPlayer.gameId = await this.getCurrentGameId();
+
+            // Create new game
+            Player.currentGameId++;
+            await createNewGame(Player.currentGameId, await newPlayer.getDimensions());
         }
 
         return newPlayer;
@@ -92,24 +96,6 @@ export default class Player {
             }
         });
         return opponent;
-    }
-
-    public static getPlayerCountForCurrentGameId() {
-        let playerCount = 0;
-        Player.currentPlayers.forEach((p) => {
-            if (p.gameId === Player.currentGameId) {
-                playerCount++;
-            }
-        });
-        return playerCount;
-    }
-
-    public static async updateGameId() {
-        const playerCount = Player.getPlayerCountForCurrentGameId();
-        if (playerCount > 1) {
-            Player.currentGameId++;
-            await createNewGame(Player.currentGameId);
-        }
     }
 
     public static connectNewPlayer(player: Player) {

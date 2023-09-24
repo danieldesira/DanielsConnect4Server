@@ -50,7 +50,6 @@ socketServer.on('connection', async (ws, req) => {
         }
 
         Player.connectNewPlayer(newPlayer);
-        await Player.updateGameId();
         await newPlayer.save();
     
         console.log(`Player connected: Game Id = ${newPlayer.getGameId()},
