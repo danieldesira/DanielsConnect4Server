@@ -10,11 +10,15 @@ export async function updateGameFinish(gameId: number) {
     await updateDbValue('game', gameId, 'finish', 'current_timestamp');
 }
 
-export async function createNewGame(gameId: number, dimensions: BoardDimensions) {
+export async function createNewGame(gameId: number,
+                                    dimensions: BoardDimensions,
+                                    playerRed: number | null = null,
+                                    playerGreen: number | null = null) {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
-        await sql.query(`INSERT INTO game (id, dimensions) VALUES (${gameId}, ${dimensions})`);
+        await sql.query(`INSERT INTO game (id, board_dimensions, player_red, player_green)
+                    VALUES (${gameId}, ${dimensions}, ${playerRed}, ${playerGreen})`);
     } catch (err) {
         console.error(err);
     } finally {
@@ -102,4 +106,21 @@ export async function updateDbValue(table: string, id: number, field: string, va
     } finally {
         await sql.end();
     }
+}
+
+export async function isGamePaired(gameId: number): Promise<boolean> {
+    const sql = new Client(appConfig.connectionString);
+    let isPaired = false;
+    try {
+        await sql.connect();
+        const res = await sql.query(`SELECT player_red, player_green FROM game WHERE id = ${gameId}`);
+        const playerGreen = res.rows[0].player_green;
+        const playerRed = res.rows[0].player_red;
+        isPaired = !!playerGreen && !!playerRed;
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
+    return isPaired;
 }

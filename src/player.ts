@@ -3,7 +3,7 @@ import { Game } from "./game";
 import { WebSocket } from "ws";
 import appConfig from "./app-config";
 import { Client } from "pg";
-import { createNewGame, updateDbValue } from "./game-utils";
+import { createNewGame, isGamePaired, updateDbValue } from "./game-utils";
 
 export default class Player {
 
@@ -24,7 +24,13 @@ export default class Player {
         this.id = id;
         this.ws = ws;
         this.dimensions = null;
+        
         this.isPaired = false;
+        if (gameId !== -1) {
+            isGamePaired(gameId).then((result) => {
+                this.isPaired = result;
+            });
+        }
     }
 
     public setGame(game: Game) {
