@@ -56,7 +56,11 @@ socketServer.on('connection', async (ws, req) => {
                     Name = ${newPlayer.getName()},
                     Dimensions = ${(await newPlayer.getDimensions())}`);
     
-        const initialDataToSendNewPlayer = new InitialMessage(newPlayer.getGameId(), newPlayer.getName(), '', newPlayer.getColor());
+        const initialDataToSendNewPlayer = new InitialMessage(newPlayer.getGameId(),
+                    newPlayer.getName(),
+                    '',
+                    newPlayer.getColor(),
+                    await newPlayer.getDimensions());
     
         // If opponent already connected, the game has started
         let opponent = Player.getOpponent(newPlayer);
@@ -113,7 +117,7 @@ socketServer.on('connection', async (ws, req) => {
                         } else if (status === GameStatus.Tie) {
                             data = new TieMessage();
                         } else {
-                            data = new ErrorMessage('ERR001: Error happened during game save. Please file a bug.');
+                            data = new ErrorMessage('ERR001: Error happened during game. Please file a bug.');
                         }
                         ws.send(JSON.stringify(data));
                         opponent.getWs().send(JSON.stringify(data));

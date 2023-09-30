@@ -76,7 +76,7 @@ export default function setupExpress() {
         }
     });
 
-    app.post('/update-dimensions', async (req, res) => {
+    app.post('/settings', async (req, res) => {
         if (req.body.token && req.body.service && req.body.dimensions) {
             const token = (req.body.token ?? '') as string;
             const service = req.body.service as 'google';
