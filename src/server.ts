@@ -19,7 +19,6 @@ const socketServer = new Server({ server });
 socketServer.on('connection', async (ws, req) => {
     const url = new URL(`wss://example.com${req.url}`);
 
-    let gameId = 0;
     let name: string = '';
     let playerId: number = -1;
 
@@ -42,7 +41,7 @@ socketServer.on('connection', async (ws, req) => {
 
         let newPlayer: Player;
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
-            gameId = parseInt(url.searchParams.get('gameId') ?? '0');
+            const gameId = parseInt(url.searchParams.get('gameId') ?? '0');
             const color = parseInt(url.searchParams.get('playerColor') ?? '1');
             newPlayer = new Player(playerId, name, ws, gameId, color);
         } else {
@@ -69,7 +68,7 @@ socketServer.on('connection', async (ws, req) => {
 
             initialDataToSendNewPlayer.opponentName = opponent.getName();
 
-            const game = new Game(gameId);
+            const game = new Game(newPlayer.getGameId());
             game.handleSkipTurn = () => {
                 const message = new SkipTurnMessage(true, opponent?.getGame()?.getCurrentTurn() ?? Coin.Empty);
                 ws.send(JSON.stringify(message));
@@ -83,7 +82,7 @@ socketServer.on('connection', async (ws, req) => {
             ws.send(JSON.stringify(currentTurnMessage));
             opponent.getWs().send(JSON.stringify(currentTurnMessage));
 
-            updateGameStart(gameId);
+            updateGameStart(newPlayer.getGameId());
 
             const opponentName = newPlayer.getName();
             opponent.getWs().send(JSON.stringify({opponentName}));
@@ -101,7 +100,7 @@ socketServer.on('connection', async (ws, req) => {
                     opponent.getGame()?.resetSkipTurnSecondCount();
                     opponent.getGame()?.switchTurn();
                     
-                    const board = new GameBoard(gameId);
+                    const board = new GameBoard(newPlayer.getGameId());
                     await board.load();
                     const status = await board.put(newPlayer.getColor(), messageData.column);
                     const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
@@ -118,7 +117,7 @@ socketServer.on('connection', async (ws, req) => {
                         }
                         ws.send(JSON.stringify(data));
                         opponent.getWs().send(JSON.stringify(data));
-                        await updateGameFinish(gameId);
+                        await updateGameFinish(newPlayer.getGameId());
                     }
                 }
     
@@ -146,7 +145,7 @@ socketServer.on('connection', async (ws, req) => {
                             opponent = Player.getOpponent(newPlayer);
                         }
                         opponent?.getWs().send(JSON.stringify(new DisconnectMessage()));
-                        await updateGameFinish(gameId);
+                        await updateGameFinish(newPlayer.getGameId());
                         if (opponent) {
                             await updateWinningPlayer(opponent.getGameId(), opponent.getColor());
                         }

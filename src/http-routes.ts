@@ -9,7 +9,7 @@ import Player from "./player";
 export default function setupExpress() {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
     const app = express();
-app.use(cors());
+
     app.use(cors({
         origin: (origin, callback) => {
             if (allowedOrigins.indexOf(origin ?? '') !== -1) {
