@@ -5,6 +5,7 @@ import express from "express";
 import { PlayerInfo } from "@danieldesira/daniels-connect4-common";
 import bodyParser from "body-parser";
 import Player from "./player";
+import Services from "./types/services";
 
 export default function setupExpress() {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
@@ -26,10 +27,10 @@ export default function setupExpress() {
     });
     
     app.get('/auth', async (req, res) => {
-        if (req.query.token && req.query.service) {
-            const token = (req.query.token ?? '') as string;
-            const service = req.query.service as 'google';
-            const user = await authenticateUser(token, service);
+        const token = req.get('Authorization');
+        const service = req.get('Service');
+        if (token && service) {
+            const user = await authenticateUser(token, service as Services);
             if (user) {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
@@ -43,10 +44,10 @@ export default function setupExpress() {
     });
 
     app.get('/stats', async (req, res) => {
-        if (req.query.token && req.query.service) {
-            const token = (req.query.token ?? '') as string;
-            const service = req.query.service as 'google';
-            const user = await authenticateUser(token, service);
+        const token = req.get('Authorization');
+        const service = req.get('Service');
+        if (token && service) {
+            const user = await authenticateUser(token, service as Services);
             if (user) {
                 const statistics = await getPlayerStats(user.id);
                 if (statistics) {

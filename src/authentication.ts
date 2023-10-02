@@ -4,8 +4,9 @@ import { Client } from "pg";
 import appConfig from "./app-config";
 import { AuthenticatedUser, UserDBModel } from "./models/authenticated-user";
 import { BoardDimensions } from "@danieldesira/daniels-connect4-common";
+import Services from "./types/services";
 
-export async function authenticateUser(token: string, service: 'google'): Promise<AuthenticatedUser | null> {
+export async function authenticateUser(token: string, service: Services): Promise<AuthenticatedUser | null> {
     let user: AuthenticatedUser | null = null;
     switch (service) {
         case 'google':
@@ -34,7 +35,7 @@ async function handleGoogleToken(token: string): Promise<AuthenticatedUser | nul
     }
 }
 
-async function getDBUser(name: string, surname: string, email: string, externalId: string, service: 'google'): Promise<UserDBModel> {
+async function getDBUser(name: string, surname: string, email: string, externalId: string, service: Services): Promise<UserDBModel> {
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
