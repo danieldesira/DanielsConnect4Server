@@ -27,10 +27,9 @@ export default function setupExpress() {
     });
     
     app.get('/auth', async (req, res) => {
-        const token = req.get('Authorization');
-        const service = req.get('Service');
-        if (token && service) {
-            const user = await authenticateUser(token, service as Services);
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
@@ -44,10 +43,9 @@ export default function setupExpress() {
     });
 
     app.get('/stats', async (req, res) => {
-        const token = req.get('Authorization');
-        const service = req.get('Service');
-        if (token && service) {
-            const user = await authenticateUser(token, service as Services);
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 const statistics = await getPlayerStats(user.id);
                 if (statistics) {
@@ -61,10 +59,9 @@ export default function setupExpress() {
     });
 
     app.get('/settings', async (req, res) => {
-        if (req.query.token && req.query.service) {
-            const token = (req.query.token ?? '') as string;
-            const service = req.query.service as 'google';
-            const user = await authenticateUser(token, service);
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 const settings = await Player.getSettings(user.id);
                 if (settings) {
@@ -78,10 +75,9 @@ export default function setupExpress() {
     });
 
     app.post('/settings', async (req, res) => {
-        if (req.body.token && req.body.service && req.body.dimensions) {
-            const token = (req.body.token ?? '') as string;
-            const service = req.body.service as 'google';
-            const user = await authenticateUser(token, service);
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 const dimensions = req.body.dimensions;
                 await updatePlayerDimensions(user.id, dimensions);

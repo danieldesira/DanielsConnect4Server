@@ -17,12 +17,13 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
-### 0.2.4 (Beta - )
+### 0.2.4 (Beta - 03/10/2023 5PM Malta time)
 * Sending error message when Google token has expired
 * Adapt to multiple dimensions
 * Internal: Code cleanup
 * Google signon: Clear undefined names/surnames
 * Google signon: Returns 401 if user is not authenticated
+* HTTP server: Read token through Authorization header
 
 ### 0.2.3 (Beta - 05/08/2023)
 * Fix CORS origins for deployment
