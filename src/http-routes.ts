@@ -1,11 +1,15 @@
 import cors from "cors";
 import { authenticateUser } from "./authentication";
-import { getPlayerStats } from "./game-utils";
-import { Express } from "express";
+import { getPlayerStats, updatePlayerDimensions } from "./game-utils";
+import express from "express";
 import { PlayerInfo } from "@danieldesira/daniels-connect4-common";
+import bodyParser from "body-parser";
+import Player from "./player";
+import Services from "./types/services";
 
-export default function setupExpress(app: Express) {
+export default function setupExpress() {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
+    const app = express();
 
     app.use(cors({
         origin: (origin, callback) => {
@@ -16,36 +20,74 @@ export default function setupExpress(app: Express) {
             }
         }
     }));
+    app.use(bodyParser.json());
 
-    app.get('/', (req, res) => {
+    app.get('/', (_req, res) => {
         res.send('Daniel\'s Connect4 Server is running!');
     });
     
     app.get('/auth', async (req, res) => {
-        if (req.query.token && req.query.service) {
-            const token = (req.query.token ?? '') as string;
-            const service = req.query.service as 'google';
-            const user = await authenticateUser(token, service);
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 res.json({
                     user: user.fullName.trim().substring(0, 10),
                     picUrl: user.picUrl
                 } as PlayerInfo);
+            } else {
+                res.status(401);
+                res.json({message: 'Unauthenticated'});
             }
         }
     });
 
     app.get('/stats', async (req, res) => {
-        if (req.query.token && req.query.service) {
-            const token = (req.query.token ?? '') as string;
-            const service = req.query.service as 'google';
-            const user = await authenticateUser(token, service);
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 const statistics = await getPlayerStats(user.id);
                 if (statistics) {
                     res.json(statistics);
                 }
+            } else {
+                res.status(401);
+                res.json({message: 'Unauthenticated'});
             }
         }
     });
+
+    app.get('/settings', async (req, res) => {
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
+            if (user) {
+                const settings = await Player.getSettings(user.id);
+                if (settings) {
+                    res.json(settings);
+                }
+            } else {
+                res.status(401);
+                res.json({message: 'Unauthenticated'});
+            }
+        }
+    });
+
+    app.post('/settings', async (req, res) => {
+        const {authorization, service} = req.headers;
+        if (authorization && service) {
+            const user = await authenticateUser(authorization, service as Services);
+            if (user) {
+                const dimensions = req.body.dimensions;
+                await updatePlayerDimensions(user.id, dimensions);
+                res.json({message: 'ok'});
+            } else {
+                res.status(401);
+                res.json({message: 'Unauthenticated'});
+            }
+        }
+    });
+
+    return app;
 }
