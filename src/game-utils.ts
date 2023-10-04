@@ -17,8 +17,9 @@ export async function createNewGame(gameId: number,
     const sql = new Client(appConfig.connectionString);
     try {
         await sql.connect();
-        await sql.query(`INSERT INTO game (id, board_dimensions, player_red, player_green)
-                    VALUES (${gameId}, ${dimensions}, ${playerRed}, ${playerGreen})`);
+        await sql.query(`INSERT INTO game (id, board_dimensions, player_red, player_green,
+                                        is_initial_sent_player_red, is_initial_sent_player_green)
+                    VALUES (${gameId}, ${dimensions}, ${playerRed}, ${playerGreen}, 0::bit, 0::bit)`);
     } catch (err) {
         console.error(err);
     } finally {
@@ -123,4 +124,27 @@ export async function isGamePaired(gameId: number): Promise<boolean> {
         await sql.end();
     }
     return isPaired;
+}
+
+export async function isInitialSent(gameId: number, playerColor: Coin): Promise<boolean> {
+    const sql = new Client(appConfig.connectionString);
+    let isSent = false;
+    try {
+        await sql.connect();
+        const color = (playerColor === Coin.Red ? 'red' : 'green');
+        const res = await sql.query(`SELECT is_initial_sent_player_${color} FROM game WHERE id = ${gameId}`);
+        if (res.rowCount > 0) {
+            isSent = res.rows[0][`is_initial_sent_player_${color}`] as boolean;
+        }
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await sql.end();
+    }
+    return isSent;
+}
+
+export async function updateInitialSent(gameId: number, playerColor: Coin) {
+    const color = (playerColor === Coin.Red ? 'red' : 'green');
+    await updateDbValue('game', gameId, `is_initial_sent_player_${color}`, '1::bit');
 }

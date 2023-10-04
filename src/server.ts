@@ -1,6 +1,6 @@
 import { Server } from 'ws';
 import GameBoard from './game-board';
-import { updateGameFinish, updateGameStart, updateWinningPlayer } from './game-utils';
+import { isInitialSent, updateGameFinish, updateGameStart, updateInitialSent, updateWinningPlayer } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
@@ -42,7 +42,7 @@ socketServer.on('connection', async (ws, req) => {
         let newPlayer: Player;
         if (url.searchParams.has('playerColor') && url.searchParams.has('gameId')) {
             const gameId = parseInt(url.searchParams.get('gameId') ?? '0');
-            const color = parseInt(url.searchParams.get('playerColor') ?? '1');
+            const color = parseInt(url.searchParams.get('playerColor') ?? '0');
             newPlayer = new Player(playerId, name, ws, gameId, color);
         } else {
             newPlayer = await Player.attemptNewPlayerPairing(playerId, name, ws);
@@ -92,7 +92,10 @@ socketServer.on('connection', async (ws, req) => {
             opponent.getWs().send(JSON.stringify({opponentName}));
         }
     
-        ws.send(JSON.stringify(initialDataToSendNewPlayer));
+        if (await isInitialSent(newPlayer.getGameId(), newPlayer.getColor())) {
+            ws.send(JSON.stringify(initialDataToSendNewPlayer));
+            await updateInitialSent(newPlayer.getGameId(), newPlayer.getColor());
+        }
 
         ws.on('message', async (data: string) => {
             const messageData = JSON.parse(data);
@@ -168,5 +171,5 @@ socketServer.on('connection', async (ws, req) => {
     }
 });
 
-console.log('Daniel\'s Connect4 Server 0.2.4 (Beta) running...');
+console.log('Daniel\'s Connect4 Server 0.2.5 (Beta) running...');
 console.log(`Listening on port: ${port}`);

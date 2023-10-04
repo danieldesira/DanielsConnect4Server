@@ -82,10 +82,7 @@ export default class Player {
         if (!newPlayer.isPaired) {
             newPlayer.color = Coin.Red;
             newPlayer.gameId = await this.getCurrentGameId();
-
-            // Create new game
-            Player.currentGameId++;
-            await createNewGame(Player.currentGameId, await newPlayer.getDimensions());
+            await createNewGame(newPlayer.gameId, await newPlayer.getDimensions());
         }
 
         return newPlayer;
@@ -118,7 +115,7 @@ export default class Player {
             try {
                 await sql.connect();
                 const res = await sql.query('SELECT id FROM game ORDER BY id DESC LIMIT 1');
-                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) : 0);
+                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) + 1 : 1);
             } catch (err) {
                 console.error(`Failed to fetch current game ID ${err}`);
             } finally {
