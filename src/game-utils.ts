@@ -134,7 +134,8 @@ export async function isInitialSent(gameId: number, playerColor: Coin): Promise<
         const color = (playerColor === Coin.Red ? 'red' : 'green');
         const res = await sql.query(`SELECT is_initial_sent_player_${color} FROM game WHERE id = ${gameId}`);
         if (res.rowCount > 0) {
-            isSent = res.rows[0][`is_initial_sent_player_${color}`] as boolean;
+            //Postgres bit fields can be '1'/'0' - conversion to boolean
+            isSent = !!parseInt(res.rows[0][`is_initial_sent_player_${color}`]);
         }
     } catch (err) {
         console.error(err);

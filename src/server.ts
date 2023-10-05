@@ -92,7 +92,8 @@ socketServer.on('connection', async (ws, req) => {
             opponent.getWs().send(JSON.stringify({opponentName}));
         }
     
-        if (await isInitialSent(newPlayer.getGameId(), newPlayer.getColor())) {
+        const initialSent = await isInitialSent(newPlayer.getGameId(), newPlayer.getColor());
+        if (!initialSent) {
             ws.send(JSON.stringify(initialDataToSendNewPlayer));
             await updateInitialSent(newPlayer.getGameId(), newPlayer.getColor());
         }
