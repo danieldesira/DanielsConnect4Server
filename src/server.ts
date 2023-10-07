@@ -1,13 +1,13 @@
 import { Server } from 'ws';
 import GameBoard from './game-board';
-import { isInitialSent, updateGameFinish, updateGameStart, updateInitialSent, updateWinningPlayer } from './game-utils';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
 import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
 import http from 'node:http';
-import setupExpress from './http-routes';
+import setupExpress from './setup-express';
 import Player from './player';
+import GameUtils from './game-utils';
 
 const port: number = parseInt(process.env.PORT ?? '0') || 3000;
 const app = setupExpress();
@@ -86,16 +86,17 @@ socketServer.on('connection', async (ws, req) => {
             ws.send(JSON.stringify(currentTurnMessage));
             opponent.getWs().send(JSON.stringify(currentTurnMessage));
 
-            updateGameStart(newPlayer.getGameId());
+            
+            GameUtils.updateGameStart(newPlayer.getGameId());
 
             const opponentName = newPlayer.getName();
             opponent.getWs().send(JSON.stringify({opponentName}));
         }
     
-        const initialSent = await isInitialSent(newPlayer.getGameId(), newPlayer.getColor());
+        const initialSent = await GameUtils.isInitialSent(newPlayer.getGameId(), newPlayer.getColor());
         if (!initialSent) {
             ws.send(JSON.stringify(initialDataToSendNewPlayer));
-            await updateInitialSent(newPlayer.getGameId(), newPlayer.getColor());
+            await GameUtils.updateInitialSent(newPlayer.getGameId(), newPlayer.getColor());
         }
 
         ws.on('message', async (data: string) => {
@@ -125,7 +126,7 @@ socketServer.on('connection', async (ws, req) => {
                         }
                         ws.send(JSON.stringify(data));
                         opponent.getWs().send(JSON.stringify(data));
-                        await updateGameFinish(newPlayer.getGameId());
+                        await GameUtils.updateGameFinish(newPlayer.getGameId());
                     }
                 }
     
@@ -153,9 +154,9 @@ socketServer.on('connection', async (ws, req) => {
                             opponent = Player.getOpponent(newPlayer);
                         }
                         opponent?.getWs().send(JSON.stringify(new DisconnectMessage()));
-                        await updateGameFinish(newPlayer.getGameId());
+                        await GameUtils.updateGameFinish(newPlayer.getGameId());
                         if (opponent) {
-                            await updateWinningPlayer(opponent.getGameId(), opponent.getColor());
+                            await GameUtils.updateWinningPlayer(opponent.getGameId(), opponent.getColor());
                         }
                     }
                 } else {

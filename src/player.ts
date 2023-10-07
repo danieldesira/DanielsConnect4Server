@@ -3,7 +3,7 @@ import { Game } from "./game";
 import { WebSocket } from "ws";
 import appConfig from "./app-config";
 import { Client } from "pg";
-import { createNewGame, isGamePaired, updateDbValue } from "./game-utils";
+import GameUtils from "./game-utils";
 
 export default class Player {
 
@@ -27,7 +27,7 @@ export default class Player {
         
         this.isPaired = false;
         if (gameId !== -1) {
-            isGamePaired(gameId).then((result) => {
+            GameUtils.isGamePaired(gameId).then((result) => {
                 this.isPaired = result;
             });
         }
@@ -82,7 +82,7 @@ export default class Player {
         if (!newPlayer.isPaired) {
             newPlayer.color = Coin.Red;
             newPlayer.gameId = await this.getCurrentGameId();
-            await createNewGame(newPlayer.gameId, await newPlayer.getDimensions());
+            await GameUtils.createNewGame(newPlayer.gameId, await newPlayer.getDimensions());
         }
 
         return newPlayer;
@@ -127,9 +127,9 @@ export default class Player {
 
     public async save() {
         if (this.color === Coin.Red) {
-            await updateDbValue('game', this.gameId, 'player_red', this.id.toString());
+            await GameUtils.updateDbValue('game', this.gameId, 'player_red', this.id.toString());
         } else {
-            await updateDbValue('game', this.gameId, 'player_green', this.id.toString());
+            await GameUtils.updateDbValue('game', this.gameId, 'player_green', this.id.toString());
         }
     }
 
