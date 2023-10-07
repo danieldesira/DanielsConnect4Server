@@ -1,11 +1,11 @@
 import cors from "cors";
 import { authenticateUser } from "./authentication";
-import { getPlayerStats, updatePlayerDimensions } from "./game-utils";
 import express from "express";
 import { PlayerInfo } from "@danieldesira/daniels-connect4-common";
 import bodyParser from "body-parser";
 import Player from "./player";
 import Services from "./types/services";
+import GameUtils from "./game-utils";
 
 export default function setupExpress() {
     const allowedOrigins = ['http://localhost:5000', 'https://danieldesira.github.io'];
@@ -47,7 +47,7 @@ export default function setupExpress() {
         if (authorization && service) {
             const user = await authenticateUser(authorization, service as Services);
             if (user) {
-                const statistics = await getPlayerStats(user.id);
+                const statistics = await GameUtils.getPlayerStats(user.id);
                 if (statistics) {
                     res.json(statistics);
                 }
@@ -80,7 +80,7 @@ export default function setupExpress() {
             const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 const dimensions = req.body.dimensions;
-                await updatePlayerDimensions(user.id, dimensions);
+                await GameUtils.updatePlayerDimensions(user.id, dimensions);
                 res.json({message: 'ok'});
             } else {
                 res.status(401);

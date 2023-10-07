@@ -17,6 +17,11 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
+### 0.2.5 (Beta - 07/10/2023 11:45PM Malta time)
+* Create flag in the database to prevent `InitialMessage` to be resent after player reconnection
+* Row in `game` table only created when an unpairable player connects
+* Code cleanup
+
 ### 0.2.4 (Beta - 03/10/2023 5PM Malta time)
 * Sending error message when Google token has expired
 * Adapt to multiple dimensions
