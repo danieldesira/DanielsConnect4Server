@@ -17,6 +17,9 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
+### 0.2.6 (Beta - )
+* Internal: Upgraded Common library to 0.2
+
 ### 0.2.5 (Beta - 07/10/2023 11:45PM Malta time)
 * Create flag in the database to prevent `InitialMessage` to be resent after player reconnection
 * Row in `game` table only created when an unpairable player connects

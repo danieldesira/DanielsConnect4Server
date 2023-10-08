@@ -47,6 +47,8 @@ export default class GameUtils {
                 case Coin.Empty:
                     winner = -1;
                     break;
+                default:
+                    winner = -1;
             }
     
             await sql.query(`UPDATE game SET winning_player = ${winner} WHERE id = ${gameId}`);
