@@ -1,4 +1,4 @@
-import { BoardDimensions, Coin, PlayerSettings } from "@danieldesira/daniels-connect4-common";
+import { BoardDimensions, Coin, PlayerSettings, Themes } from "@danieldesira/daniels-connect4-common";
 import { Game } from "./game";
 import { WebSocket } from "ws";
 import appConfig from "./app-config";
@@ -50,7 +50,7 @@ export default class Player {
             try {
                 await sql.connect();
                 const res = await sql.query(`SELECT board_dimensions FROM player WHERE id = ${this.id}`);
-                if (res.rowCount > 0) {
+                if (res.rowCount) {
                     this.dimensions = res.rows[0].board_dimensions as BoardDimensions;
                 }
             } catch (err) {
@@ -146,20 +146,39 @@ export default class Player {
     public static async getSettings(playerId: number): Promise<PlayerSettings> {
         const sql = new Client(appConfig.connectionString);
         let dimensions = BoardDimensions.Large;
+        let theme = Themes.System;
         try {
             await sql.connect();
-            const res = await sql.query(`SELECT board_dimensions FROM player WHERE id = ${[playerId]}`);
-            if (res.rowCount > 0) {
+            const res = await sql.query(`SELECT board_dimensions, theme FROM player WHERE id = ${playerId}`);
+            if (res.rowCount) {
                 dimensions = res.rows[0].board_dimensions as BoardDimensions;
+                theme = res.rows[0].theme as Themes;
             }
         } catch (err) {
-            console.error(`Failed to fetch current game ID ${err}`);
+            console.error(`Failed to fetch player settings: ${err}`);
         } finally {
             await sql.end();
         }
         return {
-            dimensions
+            dimensions,
+            theme
         };
+    }
+
+    public static async updateSettings(playerId: number, settings: PlayerSettings) {
+        const sql = new Client(appConfig.connectionString);
+        try {
+            await sql.connect();
+            await sql.query(`UPDATE player
+                            SET
+                                board_dimensions = ${settings.dimensions},
+                                theme = ${settings.theme}
+                            WHERE id = ${playerId}`);
+        } catch (err) {
+            console.error(`Failed to update player settings: ${err}`);
+        } finally {
+            await sql.end();
+        }
     }
 
 }

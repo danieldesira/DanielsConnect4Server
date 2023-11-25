@@ -2,7 +2,7 @@ import { Server } from 'ws';
 import GameBoard from './game-board';
 import { GameStatus } from './enums/game-status';
 import { Game } from './game';
-import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, SkipTurnMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
+import { ActionMessage, Coin, CurrentTurnMessage, DisconnectMessage, ErrorMessage, GameMessage, InitialMessage, TieMessage, WinnerMessage } from '@danieldesira/daniels-connect4-common';
 import { authenticateUser } from './authentication';
 import http from 'node:http';
 import setupExpress from './setup-express';
@@ -31,11 +31,15 @@ socketServer.on('connection', async (ws, req) => {
                 name = user.fullName.trim().substring(0, 10);
                 playerId = user.id;
             } else {
-                const error = new ErrorMessage('Unable to authenticate user! Please logout and login again.');
+                const error: ErrorMessage = {
+                    error: 'Unable to authenticate user! Please logout and login again.'
+                };
                 ws.send(JSON.stringify(error));
             }
         } else {
-            const error = new ErrorMessage('Unable to authenticate user! Please logout and login again.');
+            const error: ErrorMessage = {
+                error: 'Unable to authenticate user! Please logout and login again.'
+            };
             ws.send(JSON.stringify(error));
         }
 
@@ -56,17 +60,21 @@ socketServer.on('connection', async (ws, req) => {
                     Name = ${newPlayer.getName()},
                     Dimensions = ${(await newPlayer.getDimensions())}`);
     
-        const initialDataToSendNewPlayer = new InitialMessage(newPlayer.getGameId(),
-                    newPlayer.getName(),
-                    '',
-                    newPlayer.getColor(),
-                    await newPlayer.getDimensions());
+        const initialDataToSendNewPlayer: InitialMessage = {
+            gameId: newPlayer.getGameId(),
+            playerName: newPlayer.getName(),
+            opponentName: '',
+            color: newPlayer.getColor(),
+            dimensions: await newPlayer.getDimensions()
+        };
     
         // If opponent already connected, the game has started
         let opponent = Player.getOpponent(newPlayer);
         if (opponent) {
             if (opponent.getId() === newPlayer.getId()) {
-                const message = new ErrorMessage('You cannot play on the same account!');
+                const message: ErrorMessage = {
+                    error: 'You cannot play on the same account!'
+                };
                 ws.send(JSON.stringify(message));
             }
 
@@ -74,20 +82,22 @@ socketServer.on('connection', async (ws, req) => {
 
             const game = new Game(newPlayer.getGameId());
             game.handleSkipTurn = () => {
-                const message = new SkipTurnMessage(true, opponent?.getGame()?.getCurrentTurn() ?? Coin.Empty);
+                const message: CurrentTurnMessage = {
+                    currentTurn: opponent?.getGame()?.getCurrentTurn() ?? Coin.Empty
+                };
                 ws.send(JSON.stringify(message));
                 opponent?.getWs().send(JSON.stringify(message));
             };
             opponent.setGame(game);
             newPlayer.setGame(game);
 
-            const currentTurnMessage = new CurrentTurnMessage();
-            currentTurnMessage.currentTurn = game.getCurrentTurn();
+            const currentTurnMessage: CurrentTurnMessage = {
+                currentTurn: game.getCurrentTurn()
+            };
             ws.send(JSON.stringify(currentTurnMessage));
             opponent.getWs().send(JSON.stringify(currentTurnMessage));
-
             
-            GameUtils.updateGameStart(newPlayer.getGameId());
+            await GameUtils.updateGameStart(newPlayer.getGameId());
 
             const opponentName = newPlayer.getName();
             opponent.getWs().send(JSON.stringify({opponentName}));
@@ -112,17 +122,25 @@ socketServer.on('connection', async (ws, req) => {
                     const board = new GameBoard(newPlayer.getGameId());
                     await board.load();
                     const status = await board.put(newPlayer.getColor(), messageData.column);
-                    const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
+                    const message: ActionMessage = {
+                        column: messageData.column,
+                        action: messageData.action,
+                        color: messageData.color
+                    };
                     opponent.getWs().send(JSON.stringify(message));
 
                     if (status !== GameStatus.InProgress) {
                         let data: GameMessage;
                         if (status === GameStatus.Winner) {
-                            data = new WinnerMessage(newPlayer.getColor());
+                            data = {
+                                winner: newPlayer.getColor()
+                            };
                         } else if (status === GameStatus.Tie) {
-                            data = new TieMessage();
+                            data = { tie: true };
                         } else {
-                            data = new ErrorMessage('ERR001: Error happened during game. Please file a bug.');
+                            data = {
+                                error: 'ERR001: Error happened during game. Please file a bug.'
+                            };
                         }
                         ws.send(JSON.stringify(data));
                         opponent.getWs().send(JSON.stringify(data));
@@ -131,7 +149,7 @@ socketServer.on('connection', async (ws, req) => {
                 }
     
                 if (messageData.action === 'mousemove' && GameMessage.isActionMessage(messageData)) {
-                    const message = new ActionMessage(messageData.column, messageData.action, messageData.color);
+                    const message = messageData as ActionMessage;
                     opponent.getWs().send(JSON.stringify(message));
                 }
             }
@@ -145,7 +163,7 @@ socketServer.on('connection', async (ws, req) => {
                         Name = ${newPlayer.getName()}`);
 
             let disconnectCountdown: number = 30;
-            const interval: NodeJS.Timer = setInterval(async () => {
+            const interval = setInterval(async () => {
                 if (!Player.isPlayerConnected(newPlayer)) {
                     disconnectCountdown--;
                     if (disconnectCountdown <= 0) {
@@ -153,7 +171,8 @@ socketServer.on('connection', async (ws, req) => {
                         if (!opponent) {
                             opponent = Player.getOpponent(newPlayer);
                         }
-                        opponent?.getWs().send(JSON.stringify(new DisconnectMessage()));
+                        const disconnectMessage: DisconnectMessage = { hardDisconnect: true };
+                        opponent?.getWs().send(JSON.stringify(disconnectMessage));
                         await GameUtils.updateGameFinish(newPlayer.getGameId());
                         if (opponent) {
                             await GameUtils.updateWinningPlayer(opponent.getGameId(), opponent.getColor());
@@ -173,5 +192,5 @@ socketServer.on('connection', async (ws, req) => {
     }
 });
 
-console.log('Daniel\'s Connect4 Server 0.2.5 (Beta) running...');
+console.log('Daniel\'s Connect4 Server 0.2.6 (Beta) running...');
 console.log(`Listening on port: ${port}`);

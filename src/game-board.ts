@@ -66,7 +66,7 @@ export default class GameBoard {
     private async getGameDimensions(sql: Client): Promise<BoardDimensions> {
         let dimensions: BoardDimensions = BoardDimensions.Large;
         const result = await sql.query(`SELECT board_dimensions FROM game WHERE id = ${this.gameId}`);
-        if (result.rowCount > 0) {
+        if (result.rowCount) {
             dimensions = result.rows[0].board_dimensions as BoardDimensions;
         }
         

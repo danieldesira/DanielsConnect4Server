@@ -1,4 +1,4 @@
-import { Coin, randomiseColor, skipTurnMaxWait, switchTurn } from "@danieldesira/daniels-connect4-common";
+import { Coin, randomiseTurn, skipTurnMaxWait, switchTurn } from "@danieldesira/daniels-connect4-common";
 
 export class Game {
     
@@ -11,7 +11,7 @@ export class Game {
         this.gameId = gameId;
         this.skipTurnSecondCount = 0;
         setInterval(this.skipTurnIntervalCallback, 1000);
-        this.currentTurn = randomiseColor();
+        this.currentTurn = randomiseTurn();
         this.handleSkipTurn = null;
     }
 

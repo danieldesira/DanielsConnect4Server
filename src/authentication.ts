@@ -3,7 +3,7 @@ import { GoogleUser } from "./models/google-user";
 import { Client } from "pg";
 import appConfig from "./app-config";
 import { AuthenticatedUser, UserDBModel } from "./models/authenticated-user";
-import { BoardDimensions } from "@danieldesira/daniels-connect4-common";
+import { BoardDimensions, Themes } from "@danieldesira/daniels-connect4-common";
 import Services from "./types/services";
 
 export async function authenticateUser(token: string, service: Services): Promise<AuthenticatedUser | null> {
@@ -42,9 +42,25 @@ async function getDBUser(name: string, surname: string, email: string, externalI
         let id: number;
         const queryResult = await sql.query(`SELECT id, board_dimensions FROM player WHERE external_id = '${externalId}' AND service = '${service}'`);
         if (queryResult.rowCount === 0) {
-            const inserted = await sql.query(`INSERT INTO player (name, surname, email, external_id, service, board_dimensions)
-                    VALUES (${name ? `'${name}'` : 'NULL'}, ${surname ? `'${surname}'` : 'NULL'}, '${email}', '${externalId}', '${service}', ${BoardDimensions.Large})
-                    RETURNING id, board_dimensions`);
+            const inserted = await sql.query(`INSERT INTO player (
+                        name,
+                        surname,
+                        email,
+                        external_id,
+                        service,
+                        board_dimensions,
+                        theme)
+                    VALUES (
+                        ${name ? `'${name}'` : 'NULL'}, 
+                        ${surname ? `'${surname}'` : 'NULL'},
+                        '${email}',
+                        '${externalId}',
+                        '${service}',
+                        ${BoardDimensions.Large},
+                        ${Themes.System})
+                    RETURNING
+                        id,
+                        board_dimensions`);
             id = inserted.rows[0].id as number;
         } else {
             id = queryResult.rows[0].id as number;
