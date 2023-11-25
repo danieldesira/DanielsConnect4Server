@@ -71,5 +71,6 @@ CREATE TABLE public.player (
 	email varchar NOT NULL,
 	external_id varchar NOT NULL,
 	service varchar NOT NULL,
-	board_dimensions int4 NULL
+	board_dimensions int4 NULL,
+	theme int4 NULL,
 );

@@ -96,10 +96,6 @@ export default class GameUtils {
         return statistics;
     }
     
-    public static async updatePlayerDimensions(userId: number, dimensions: BoardDimensions) {
-        await this.updateDbValue('player', userId, 'board_dimensions', dimensions.toString());
-    }
-    
     public static async updateDbValue(table: string, id: number, field: string, value: string) {
         const sql = new Client(appConfig.connectionString);
         try {
@@ -136,7 +132,7 @@ export default class GameUtils {
             await sql.connect();
             const color = (playerColor === Coin.Red ? 'red' : 'green');
             const res = await sql.query(`SELECT is_initial_sent_player_${color} FROM game WHERE id = ${gameId}`);
-            if (res.rowCount > 0) {
+            if (res.rowCount) {
                 //Postgres bit fields can be '1'/'0' - conversion to boolean
                 isSent = !!parseInt(res.rows[0][`is_initial_sent_player_${color}`]);
             }

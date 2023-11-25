@@ -80,7 +80,11 @@ export default function setupExpress() {
             const user = await authenticateUser(authorization, service as Services);
             if (user) {
                 const dimensions = req.body.dimensions;
-                await GameUtils.updatePlayerDimensions(user.id, dimensions);
+                const theme = req.body.theme;
+                await Player.updateSettings(user.id, {
+                    dimensions,
+                    theme
+                });
                 res.json({message: 'ok'});
             } else {
                 res.status(401);
