@@ -11,15 +11,17 @@ export default class Player {
     private color:      Coin;
     private id:         number;
     private name:       string;
+    private pic:        string;
     private ws:         WebSocket;
     private game:       Game | null;
     private dimensions: BoardDimensions | null;
     private isPaired:   boolean;
 
-    public constructor(id: number, name: string, ws: WebSocket, gameId: number = -1, color: Coin = Coin.Empty) {
+    public constructor(id: number, name: string, pic: string, ws: WebSocket, gameId: number = -1, color: Coin = Coin.Empty) {
         this.gameId = gameId;
         this.color = color;
         this.name = name;
+        this.pic = pic;
         this.game = null;
         this.id = id;
         this.ws = ws;
@@ -42,6 +44,7 @@ export default class Player {
     public getGameId = () => this.gameId;
     public getColor = () => this.color;
     public getName = () => this.name;
+    public getPic = () => this.pic;
     public getId = () => this.id;
 
     public async getDimensions(): Promise<BoardDimensions> {
@@ -62,8 +65,8 @@ export default class Player {
         return this.dimensions as BoardDimensions;
     }
 
-    public static async attemptNewPlayerPairing(id: number, name: string, ws: WebSocket): Promise<Player> {
-        const newPlayer = new Player(id, name, ws);
+    public static async attemptNewPlayerPairing(id: number, name: string, pic: string, ws: WebSocket): Promise<Player> {
+        const newPlayer = new Player(id, name, pic, ws);
 
         for (const player of Array.from(this.currentPlayers)) {
             if (!player.isPaired) {
@@ -81,7 +84,7 @@ export default class Player {
 
         if (!newPlayer.isPaired) {
             newPlayer.color = Coin.Red;
-            newPlayer.gameId = await this.getCurrentGameId();
+            newPlayer.gameId = await this.getNextGameId();
             await GameUtils.createNewGame(newPlayer.gameId, await newPlayer.getDimensions());
         }
 
@@ -109,19 +112,20 @@ export default class Player {
         Player.currentPlayers.delete(player);
     }
 
-    public static async getCurrentGameId(): Promise<number> {
+    public static async getNextGameId(): Promise<number> {
         if (Player.currentGameId === 0) {
             const sql = new Client(appConfig.connectionString);
             try {
                 await sql.connect();
                 const res = await sql.query('SELECT id FROM game ORDER BY id DESC LIMIT 1');
-                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) + 1 : 1);
+                Player.currentGameId = (res.rows.length > 0 ? parseInt(res.rows[0].id) : 0);
             } catch (err) {
                 console.error(`Failed to fetch current game ID ${err}`);
             } finally {
                 await sql.end();
             }
         }
+        Player.currentGameId++;
         return Player.currentGameId;
     }
 

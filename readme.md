@@ -17,6 +17,11 @@ will cause the application to restart.
 Daniel Desira
 
 ## Version History
+### 0.2.7 (Beta - )
+* Internal: Prettify code
+* Fixed bug when attempting to pair a player with different dimensions
+* Send player profile pics on game start
+
 ### 0.2.6 (Beta - 25/11/2023 3:20PM Malta time)
 * Internal: Upgraded Common library to 0.2.1
 * Added support for themes
