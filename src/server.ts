@@ -16,6 +16,7 @@ import http from "node:http";
 import setupExpress from "./setup-express";
 import Player from "./player";
 import GameUtils from "./game-utils";
+import appConfig from "./app-config";
 
 const port: number = parseInt(process.env.PORT ?? "0") || 3000;
 const app = setupExpress();
@@ -235,5 +236,5 @@ socketServer.on("connection", async (ws, req) => {
   }
 });
 
-console.log("Daniel's Connect4 Server 0.2.6 (Beta) running...");
+console.log(`Daniel's Connect4 Server ${appConfig.version} (${appConfig.status}) running...`);
 console.log(`Listening on port: ${port}`);

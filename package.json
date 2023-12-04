@@ -1,4 +1,5 @@
 {
+  "version": "0.2.7",
   "dependencies": {
     "@danieldesira/daniels-connect4-common": "^0.2.2",
     "axios": "^1.4.0",
