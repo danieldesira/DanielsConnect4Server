@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import Player from "./player";
 import Services from "./types/services";
 import GameUtils from "./game-utils";
+import appConfig from "./app-config";
 
 export default function setupExpress() {
   const allowedOrigins = [
@@ -28,7 +29,7 @@ export default function setupExpress() {
   app.use(bodyParser.json());
 
   app.get("/", (_req, res) => {
-    res.send("Daniel's Connect4 Server is running!");
+    res.send(`Daniel's Connect4 Server ${appConfig.version} is running!`);
   });
 
   app.get("/auth", async (req, res) => {

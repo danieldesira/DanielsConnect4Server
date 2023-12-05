@@ -236,5 +236,5 @@ socketServer.on("connection", async (ws, req) => {
   }
 });
 
-console.log(`Daniel's Connect4 Server ${appConfig.version} (${appConfig.status}) running...`);
+console.log(`Daniel's Connect4 Server ${appConfig.version} running...`);
 console.log(`Listening on port: ${port}`);
