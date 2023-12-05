@@ -1,6 +1,7 @@
 {
+  "version": "0.2.7b",
   "dependencies": {
-    "@danieldesira/daniels-connect4-common": "^0.2.1",
+    "@danieldesira/daniels-connect4-common": "^0.2.2",
     "axios": "^1.4.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

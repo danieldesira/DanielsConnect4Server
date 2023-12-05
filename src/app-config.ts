@@ -1,7 +1,9 @@
 import "dotenv/config";
+import {version} from "../package.json";
 
 const appConfig = {
-    connectionString: process.env.DATABASE_URL,
+  version,
+  connectionString: process.env.DATABASE_URL,
 };
 
 export default appConfig;
